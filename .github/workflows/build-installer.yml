@@ -1,0 +1,101 @@
+# Builds the Windows installer on GitHub's cloud runners.
+#
+# WHY THIS EXISTS: the installer (.exe) can only be compiled on Windows
+# (PyInstaller + Inno Setup), which the maintainer may not have locally.
+# This workflow builds it in the cloud: push the repo to GitHub, run the
+# workflow, download the finished Setup .exe — no local build tools needed.
+#
+# HOW TO USE:
+#   1. Create a free GitHub account and push this repository to it
+#      (a private repository is fine).
+#   2. Add THIS file (.github/workflows/build-installer.yml) via the GitHub
+#      website (Add file -> Create new file): GitHub Apps cannot create
+#      files under .github/workflows/, so automation cannot push it.
+#   3. On github.com, open the repository -> Actions ->
+#      "Build Windows installer" -> "Run workflow".
+#   4. When the run finishes (roughly 10-20 minutes), download the
+#      "PetrolPumpManager-Setup" artifact from the run page. It contains
+#      PetrolPumpManager-Setup-<version>.exe — the same installer the
+#      manual build in documentation/install.md produces.
+#
+# SAFETY: the full test suite runs first, and the installer is only built
+# and uploaded when every test passes. The build is unsigned, so Windows
+# SmartScreen will show "Unknown publisher" on first install — expected
+# and documented in documentation/install.md (section 7).
+#
+# NOTE: this workflow has not been run end-to-end yet. The steps mirror
+# the manual build in documentation/install.md; the first cloud run is
+# the live verification.
+
+name: Build Windows installer
+
+on:
+  workflow_dispatch: {} # manual "Run workflow" button in the Actions tab
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install pyinstaller
+
+      - name: Restore bundled Urdu fonts
+        # The .ttf binaries travel in the repo as base64 text chunks
+        # (*.ttf.b64.part1/2/3) because GitHub Apps cannot push binary
+        # files via the API. Reassemble and decode them before
+        # tests/builds need the real fonts.
+        run: |
+          python - <<'EOF'
+          import base64
+          from pathlib import Path
+          d = Path("app/resources/fonts")
+          for name in ("NotoSansArabic-Regular.ttf", "NotoSansArabic-Bold.ttf"):
+              b64 = "".join(
+                  (d / f"{name}.b64.part{i}").read_text() for i in (1, 2, 3)
+              )
+              target = d / name
+              target.write_bytes(base64.b64decode(b64))
+              print("restored", target, target.stat().st_size, "bytes")
+          EOF
+
+      - name: Check version is in sync (app <-> installer)
+        # The .iss hardcodes MyAppVersion; it must match
+        # app/config.py :: APP_VERSION (see the .iss header comment).
+        run: python installer/check_version_sync.py
+
+      - name: Run full test suite
+        run: pytest app/tests -q
+
+      - name: Build with PyInstaller
+        # Produces dist/PetrolPumpManager/ (one-dir layout, see the .spec).
+        run: pyinstaller installer/petrol_pump_manager.spec
+
+      - name: Install Inno Setup 6
+        run: choco install innosetup --no-progress -y
+
+      - name: Compile installer
+        # Produces installer/Output/PetrolPumpManager-Setup-<version>.exe
+        run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\petrol_pump_manager.iss'
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: PetrolPumpManager-Setup
+          path: installer/Output/PetrolPumpManager-Setup-*.exe
+          if-no-files-found: error
