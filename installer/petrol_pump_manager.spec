@@ -59,8 +59,23 @@ datas = [
     ),
     # Noto Sans Arabic fonts for Urdu PDF reports
     # (app/services/report_export.py::_FONT_DIR). Includes the OFL license.
+    # Only the real font/license files are bundled — the *.ttf.b64 text
+    # copies exist only so CI can restore the binaries (see
+    # .github/workflows/build-installer.yml) and must not ship.
     (
-        str(PROJECT_ROOT / "app" / "resources" / "fonts"),
+        str(PROJECT_ROOT / "app" / "resources" / "fonts" / "NotoSansArabic-Regular.ttf"),
+        "app/resources/fonts",
+    ),
+    (
+        str(PROJECT_ROOT / "app" / "resources" / "fonts" / "NotoSansArabic-Bold.ttf"),
+        "app/resources/fonts",
+    ),
+    (
+        str(PROJECT_ROOT / "app" / "resources" / "fonts" / "OFL.txt"),
+        "app/resources/fonts",
+    ),
+    (
+        str(PROJECT_ROOT / "app" / "resources" / "fonts" / "FONTS.md"),
         "app/resources/fonts",
     ),
     # SQL migrations — required at every startup (app/database/migrator.py).
