@@ -60,6 +60,9 @@ jobs:
         # (*.ttf.b64.part1/2/3) because GitHub Apps cannot push binary
         # files via the API. Reassemble and decode them before
         # tests/builds need the real fonts.
+        # NOTE: shell:bash is required — the default PowerShell on
+        # windows-latest cannot parse the heredoc below.
+        shell: bash
         run: |
           python - <<'EOF'
           import base64
