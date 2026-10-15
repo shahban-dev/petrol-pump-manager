@@ -1,0 +1,4 @@
+# Petrol Pump Manager — dev/test dependencies
+-r requirements.txt
+pytest>=8.0
+pypdf>=6.0  # PDF render-checks in test_phase6_exports.py (test-only)
