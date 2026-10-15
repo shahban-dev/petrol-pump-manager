@@ -1,0 +1,147 @@
+# Petrol Pump Manager — example configuration
+#
+# Version: 1.0.0 (schema v15)
+#
+# HOW SETTINGS WORK
+# -----------------
+# Almost everything below is stored in the live database's ``app_settings``
+# table (``key TEXT PRIMARY KEY, value TEXT NOT NULL``). All values are stored
+# as strings, even numbers and booleans ("1" = on, "0" = off).
+#
+# You do NOT normally edit this file into the app. This file is documentation:
+# it records every key the app understands, its default, and what it does.
+# To change settings in practice, use the app's Settings page
+# (Sidebar → Settings), or update the ``app_settings`` table while the app is
+# CLOSED and the backup is verified. Never edit the live database file
+# directly with the app running.
+#
+# The one exception is ``language``: it is stored in the operating system's
+# settings store (Qt QSettings, organization "PetrolPumpManager"), not in
+# ``app_settings``, because the language must be known before the database
+# is opened.
+
+# ---------------------------------------------------------------------------
+# General
+# ---------------------------------------------------------------------------
+
+# operator_name
+#   Default: "" (empty)
+#   The name of the person running the station (e.g. the manager or operator
+#   on duty). Shown on reports and recorded as the "actor" on day closings,
+#   reopenings, and corrections in the audit trail. Free text; keep it short.
+operator_name: ""
+
+# language
+#   Default: "en"
+#   Stored in: OS settings store (QSettings), NOT app_settings.
+#   UI language. Allowed values: "en" (English), "ur" (Urdu, right-to-left).
+#   Only affects the user interface — stored data, numbers, and report
+#   contents are never altered by the language setting. Switchable at any
+#   time in Settings; takes effect after restart.
+language: "en"
+
+# allocation_order
+#   Default: "fifo"
+#   Controls how a customer payment is automatically matched against open
+#   credit tickets (spec §11.4). Allowed values:
+#     "fifo"   — oldest ticket first (first-in, first-out). This is the
+#                default and the safe choice; the database trigger (Group G)
+#                backstops it so an allocation can never exceed what the
+#                customer actually owes.
+#     "manual" — no automatic allocation; the operator chooses each split
+#                by hand on the Customer Payments page.
+#   Any other value is rejected (err.invalid_allocation_order) and the app
+#   falls back to "fifo".
+allocation_order: "fifo"
+
+# ---------------------------------------------------------------------------
+# Backups
+# ---------------------------------------------------------------------------
+# The app backs up with SQLite's online backup API (never a raw file copy),
+# validates the snapshot (integrity check + foreign keys + expected rows),
+# then atomically renames it to:  PetrolPump_Backup_YYYY-MM-DD_HHMMSS.sqlite
+# A second copy can be dropped into the Google Drive folder (folder-based
+# only — the app never talks to the network; Drive's own desktop sync
+# uploads it).
+
+# backup.drive_folder
+#   Default: "" (empty — no off-site copy)
+#   Absolute path to the local Google Drive sync folder (or any folder) where
+#   a second copy of each validated backup is placed. Rejected if it points
+#   inside the app's own data directory (err.backup_drive_inside_appdata).
+#   After a copy, the history row reads "in Google Drive folder — sync
+#   unconfirmed" until the OS/Drive confirms the sync; only then does the
+#   status become sync_confirmed. Set it in the Backups page (Browse) or
+#   paste a path here if seeding a database by hand.
+backup.drive_folder: ""
+
+# backup.keep_local
+#   Default: "30"
+#   How many validated local backups to keep in the data directory's
+#   ``backups/`` folder. Older validated backups beyond this count are
+#   pruned; the newest known-good backup per destination is NEVER deleted.
+#   Must be a positive integer (err.backup_retention_invalid otherwise).
+backup.keep_local: "30"
+
+# backup.keep_drive
+#   Default: "14"
+#   Same as keep_local, but for the Drive-folder copies.
+backup.keep_drive: "14"
+
+# backup.on_day_close
+#   Default: "1" (enabled)
+#   Automatically take a validated backup right after a guided day-close
+#   completes. A backup failure NEVER breaks or rolls back the close — it is
+#   logged and surfaced on the Backups page instead. Set to "0" to disable.
+backup.on_day_close: "1"
+
+# backup.on_shutdown
+#   Default: "0" (disabled)
+#   Take a validated backup when the app exits cleanly (headless shutdown
+#   path). Off by default because most operators already get a backup at
+#   day-close; enable it ("1") if the station sometimes shuts the PC down
+#   without closing the day.
+backup.on_shutdown: "0"
+
+# backup.on_upgrade
+#   Default: "1" (enabled)
+#   Before any schema migration runs at startup, take an automatic safety
+#   backup. This is FAIL-CLOSED: if the safety backup cannot be created,
+#   the upgrade is aborted (AppStartupError) and the database is left
+#   untouched. Set to "0" only if you take manual backups before upgrading
+#   — strongly discouraged.
+backup.on_upgrade: "1"
+
+# backup.periodic_minutes
+#   Default: "0" (disabled)
+#   Take a validated backup every N minutes while the app is open.
+#   "0" disables periodic backups entirely (the default; day-close backups
+#   are the intended mechanism). Set e.g. "60" for an hourly safety net on
+#   machines left running all day. Must be a non-negative integer.
+backup.periodic_minutes: "0"
+
+# backup.last_scheduled_at_utc
+#   Default: (absent until the first scheduled backup runs)
+#   INTERNAL — written by the scheduler itself (UTC ISO timestamp of the last
+#   periodic backup). Do not set or edit by hand; it only anchors the next
+#   scheduled run.
+# backup.last_scheduled_at_utc: "2026-10-15T13:54:44+00:00"
+
+# backup_interval_minutes
+#   LEGACY — predecessor of backup.periodic_minutes from an earlier build.
+#   If present it is migrated to backup.periodic_minutes on first read and
+#   then ignored. Do not use in new setups.
+
+# ---------------------------------------------------------------------------
+# What is intentionally NOT in app_settings
+# ---------------------------------------------------------------------------
+# - Station identity (name "Zeishan Petroleum Service", PSO branding),
+#   nozzle layout (1 PG+ / 2 PG+ petrol, 3 HSD / 4 HSD diesel), products,
+#   tanks, and prices live in their own database tables and are managed
+#   through the app's pages, not config keys. The 4-nozzle layout is a
+#   starting seed — it is configurable inside the app, not hard-coded.
+# - Currency is always PKR; time zone is always Asia/Karachi. These are
+#   business constants of the product, not settings.
+# - Data directory: %LOCALAPPDATA%\PetrolPumpManager on Windows
+#   (~/.local/share/PetrolPumpManager on Linux). The live database must
+#   never be placed inside Program Files or inside the Drive folder.
