@@ -157,11 +157,13 @@ def test_adjust_opening_balance(phase4_services, db):
     adj = svc.credit.adjust_opening_balance(
         cid, 500_000, "opening understated at setup", DAY,
         authorized_by="manager",
+        occurred_at_utc=pkt_clock_utc_iso(DAY, 10),
     )
     assert adj.adjustment_paisa == 500_000
     assert svc.credit.outstanding(cid) == 500_000
     svc.credit.adjust_opening_balance(
-        cid, -200_050, "double-counted invoice", DAY
+        cid, -200_050, "double-counted invoice", DAY,
+        occurred_at_utc=pkt_clock_utc_iso(DAY, 11),
     )
     assert svc.credit.outstanding(cid) == 299_950
     with pytest.raises(errors.ValidationError):
@@ -413,7 +415,9 @@ def test_allocate_none_means_fifo(phase4_services):
     _issue(svc, occurred_at_utc=pkt_clock_utc_iso(DAY, 11),
            lines=[dict(LINE_20L)])
     payment = _pay(svc, 1_200_000, auto_allocate=False)
-    done = svc.payments.allocate(payment.id, None)
+    done = svc.payments.allocate(
+        payment.id, None, occurred_at_utc=pkt_clock_utc_iso(DAY, 13)
+    )
     allocs = {a.ticket_uuid: a.effective_paisa for a in done.allocations}
     assert allocs[older.uuid] == GROSS_40L  # oldest first even in manual mode
     assert done.unallocated_paisa == 0
@@ -438,6 +442,7 @@ def test_explicit_splits_and_atomic_over_allocation(phase4_services):
                 {"ticket_uuid": first.uuid, "amount_paisa": 400_000},
                 {"ticket_uuid": second.uuid, "amount_paisa": 200_000},
             ],
+            occurred_at_utc=pkt_clock_utc_iso(DAY, 13),
         )
     fresh = svc.payments.payment_details(payment.id)
     assert fresh.allocations == ()
@@ -449,6 +454,7 @@ def test_explicit_splits_and_atomic_over_allocation(phase4_services):
             {"ticket_uuid": first.uuid, "amount_paisa": 400_000},
             {"ticket_uuid": second.uuid, "amount_paisa": 100_000},
         ],
+        occurred_at_utc=pkt_clock_utc_iso(DAY, 13),
     )
     assert done.unallocated_paisa == 0
     assert svc.payments.ticket_unpaid(first.uuid) == GROSS_40L - 400_000
@@ -468,14 +474,19 @@ def test_allocate_validates_splits(phase4_services):
         svc.payments.allocate(
             payment.id,
             [{"ticket_uuid": other_ticket.uuid, "amount_paisa": 100_000}],
+            occurred_at_utc=pkt_clock_utc_iso(DAY, 13),
         )
     with pytest.raises(errors.NotFoundError):  # unknown ticket
         svc.payments.allocate(
-            payment.id, [{"ticket_uuid": "nope", "amount_paisa": 100_000}]
+            payment.id,
+            [{"ticket_uuid": "nope", "amount_paisa": 100_000}],
+            occurred_at_utc=pkt_clock_utc_iso(DAY, 13),
         )
     with pytest.raises(errors.ValidationError):  # non-positive amount
         svc.payments.allocate(
-            payment.id, [{"ticket_uuid": ticket.uuid, "amount_paisa": 0}]
+            payment.id,
+            [{"ticket_uuid": ticket.uuid, "amount_paisa": 0}],
+            occurred_at_utc=pkt_clock_utc_iso(DAY, 13),
         )
     with pytest.raises(errors.ValidationError):  # duplicate ticket
         svc.payments.allocate(
@@ -484,6 +495,7 @@ def test_allocate_validates_splits(phase4_services):
                 {"ticket_uuid": ticket.uuid, "amount_paisa": 100_000},
                 {"ticket_uuid": ticket.uuid, "amount_paisa": 100_000},
             ],
+            occurred_at_utc=pkt_clock_utc_iso(DAY, 13),
         )
 
 
@@ -639,6 +651,7 @@ def test_allocate_to_reversed_ticket_blocked(phase4_services):
         svc.payments.allocate(
             payment.id,
             [{"ticket_uuid": ticket.uuid, "amount_paisa": 50_000}],
+            occurred_at_utc=pkt_clock_utc_iso(DAY, 13),
         )
 
 
@@ -740,6 +753,7 @@ def test_immutability_triggers_raw_sql(phase4_services, db2):
     alloc_id = svc.payments.allocate(
         payment.id,
         [{"ticket_uuid": ticket.uuid, "amount_paisa": 100_000}],
+        occurred_at_utc=pkt_clock_utc_iso(DAY, 13),
     ).allocations[0].id
     with pytest.raises(sqlite3.IntegrityError, match="immutable"):
         db2.execute(

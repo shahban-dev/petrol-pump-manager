@@ -243,7 +243,7 @@ def test_restore_requires_confirmation(backup_svc):
         svc.restore_backup(record.id, confirmed=False)
 
 
-def test_restore_round_trip(backup_svc, phase3_services, db_file):
+def test_restore_round_trip(backup_svc, phase3_services, db_file, db):
     svc, tmp_path = backup_svc
     _seed_closed_day(phase3_services, "2026-10-14")
     phase3_services.days.open_day("2026-10-15", opening_cash_paisa=2_000_000)
@@ -264,6 +264,10 @@ def test_restore_round_trip(backup_svc, phase3_services, db_file):
     )
 
     known_ids = {r.id for r in svc.list_history()}
+    # Windows cannot os.replace() a file any open handle refers to: the
+    # shared ``db`` fixture connection must be closed before the restore
+    # swaps the live database file. (No-op on POSIX; required on Windows.)
+    db.close()
     report = svc.restore_backup(candidate.id, confirmed=True, actor="system")
 
     assert report.verified

@@ -126,7 +126,8 @@ def test_daily_cash_worked_example(phase5_services):
     # Old-debt recovery: an opening receivable paid in cash on DAY.
     svc.credit.create_customer("Old Debtor")
     svc.credit.adjust_opening_balance(
-        1, 300_000, "opening old debt", DAY, authorized_by="manager"
+        1, 300_000, "opening old debt", DAY, authorized_by="manager",
+        occurred_at_utc=pkt_clock_utc_iso(DAY, 19),
     )
     svc.payments.record_payment(
         "CUST-0001", DAY, 300_000, occurred_at_utc=pkt_clock_utc_iso(DAY, 19)

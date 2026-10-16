@@ -297,7 +297,7 @@ def _seed_populated_two_days(svc_ns, db_file: Path, svc: BackupService) -> None:
 
 
 def test_acceptance_15_restore_round_trip_balances(
-    backup_svc, phase4_services, db_file: Path
+    backup_svc, phase4_services, db_file: Path, db
 ):
     """Restore round-trip: back up a populated DB, mutate the live DB, then
     restore — key records and computed balances must be identical to the
@@ -350,6 +350,10 @@ def test_acceptance_15_restore_round_trip_balances(
 
     # --- restore ---
     known_ids = {r.id for r in svc.list_history()}
+    # Windows cannot os.replace() a file any open handle refers to: the
+    # shared ``db`` fixture connection must be closed before the restore
+    # swaps the live database file. (No-op on POSIX; required on Windows.)
+    db.close()
     report = svc.restore_backup(candidate.id, confirmed=True, actor="system")
 
     assert report.verified
