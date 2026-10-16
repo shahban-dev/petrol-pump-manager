@@ -39,9 +39,11 @@ Output:
 """
 
 from PyInstaller.utils.hooks import collect_submodules
+from pathlib import Path
 
 # Project root = parent of this file (installer/ lives inside the repo).
-PROJECT_ROOT = SPECPATH.parent
+# NOTE: SPECPATH is a plain string in PyInstaller (not a Path), so wrap it.
+PROJECT_ROOT = Path(SPECPATH).parent
 
 # ---------------------------------------------------------------------------
 # Bundled data files (source -> destination inside the bundle).
