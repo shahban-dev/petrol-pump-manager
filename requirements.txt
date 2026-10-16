@@ -5,3 +5,9 @@ reportlab>=4.1
 openpyxl>=3.1
 arabic-reshaper>=3.0
 python-bidi>=0.6
+# --- Timezone database ---
+# Python's zoneinfo has no system database on Windows, so Asia/Karachi
+# lookups (app/calculations/time.py) raise ZoneInfoNotFoundError there.
+# The tzdata package supplies it (inert on Linux/macOS, required on
+# Windows — both for the test suite and the installed app).
+tzdata>=2024.1
