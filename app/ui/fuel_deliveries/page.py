@@ -395,6 +395,15 @@ class FuelDeliveriesPage(QWidget):
 
     def _on_save_delivery(self) -> None:
         """Validate the form, record the delivery, refresh, clear inputs."""
+        # Guard against double-click: the button is disabled for the whole
+        # handler so two rapid clicks can't record the delivery twice.
+        self._save_btn.setEnabled(False)
+        try:
+            self._save_delivery_inner()
+        finally:
+            self._save_btn.setEnabled(True)
+
+    def _save_delivery_inner(self) -> None:
         supplier_id = self._supplier_combo.currentData()
         product_id = self._product_combo.currentData()
         tank_id = self._tank_combo.currentData()

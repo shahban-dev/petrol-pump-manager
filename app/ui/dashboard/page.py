@@ -238,6 +238,7 @@ class DashboardPage(QWidget):
     # ------------------------------------------------------------------
     def _refresh_cards(self, day) -> None:
         business_date = day.business_date
+        had_fault = False
 
         # -- cash position ------------------------------------------------
         if self._cashbook is not None:
@@ -245,6 +246,7 @@ class DashboardPage(QWidget):
                 position = self._cashbook.cash_position(business_date)
             except Exception:  # noqa: BLE001
                 position = None
+                had_fault = True
             if position is not None:
                 physical = h.dto_field(
                     position, "physical_cash_paisa", default=None
@@ -277,6 +279,7 @@ class DashboardPage(QWidget):
                     sales.revenue_by_product_paisa.get("DIESEL", 0)
                 )
             except Exception:  # noqa: BLE001
+                had_fault = True
                 pass
         self._card_petrol.value.setText(
             h.format_pkr(petrol_rev) if petrol_rev is not None else "—"
@@ -301,6 +304,7 @@ class DashboardPage(QWidget):
                 positions = self._inventory.stock_positions(business_date)
             except Exception:  # noqa: BLE001
                 positions = None
+                had_fault = True
             if positions is not None:
                 alerts = [
                     p
@@ -333,6 +337,7 @@ class DashboardPage(QWidget):
                 customers = self._credit.outstanding_all()
             except Exception:  # noqa: BLE001
                 customers = None
+                had_fault = True
             if customers is not None:
                 debtors = [c for c in customers if c.outstanding_paisa > 0]
                 total = sum(c.outstanding_paisa for c in debtors)
@@ -346,6 +351,13 @@ class DashboardPage(QWidget):
         else:
             self._card_credit.value.setText("—")
             self._card_credit.sub.setText("")
+
+        # If any section failed, say so — "—" alone is indistinguishable
+        # from "no data", and a locked/corrupt DB must not look normal.
+        if had_fault:
+            self._banner_sub.setText(
+                f"{self._banner_sub.text()} • {tr('dash2.data_fault')}"
+            )
 
     # ------------------------------------------------------------------
     def _refresh_readings(self, day) -> None:

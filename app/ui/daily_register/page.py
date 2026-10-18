@@ -161,6 +161,15 @@ class DailyRegisterPage(QWidget):
     def _business_date(self) -> str:
         return self._date_edit.date().toString("yyyy-MM-dd")
 
+    @staticmethod
+    def _status_text(status: str) -> str:
+        """Translate a raw day-status code for display (Urdu-safe)."""
+        return {
+            "open": tr("dash2.status_open"),
+            "closed": tr("dash2.status_closed"),
+            "reopened": tr("day.status_reopened"),
+        }.get(status, status)
+
     def _load_day(self) -> None:
         """Refresh the status panel for the selected date."""
         business_date = self._business_date()
@@ -180,7 +189,8 @@ class DailyRegisterPage(QWidget):
             self._close_group.setVisible(False)
             return
         self._st_status.setText(
-            f"{day.status} • {timecalc.format_display_date(day.business_date)}"
+            f"{self._status_text(day.status)} • "
+            f"{timecalc.format_display_date(day.business_date)}"
         )
         self._st_cash.setText(h.format_pkr(day.opening_cash_paisa))
         self._st_prev.setText(
@@ -223,8 +233,9 @@ class DailyRegisterPage(QWidget):
         self._reopen_btn.setVisible(is_closed)
         self._reopen_hint.setVisible(is_closed)
         if day.physical_cash_paisa is not None and not self._physical_cash.text():
+            # Whole rupees only — the field is integer-validated.
             self._physical_cash.setText(
-                f"{day.physical_cash_paisa / 100:.2f}"
+                str(day.physical_cash_paisa // 100)
             )
 
     def _parse_optional_pkr(self, widget: QLineEdit) -> int | None:
@@ -320,7 +331,7 @@ class DailyRegisterPage(QWidget):
             tr("day.confirm_close_title"),
             tr("day.confirm_close_text").format(
                 date=timecalc.format_display_date(business_date),
-                cash=f"{physical_cash / 100:,.2f}",
+                cash=h.format_pkr(physical_cash),
                 blocking=len(report.blocking_errors),
                 warnings=len(report.warnings),
             ),

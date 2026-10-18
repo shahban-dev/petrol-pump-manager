@@ -348,7 +348,13 @@ class ExpensePage(QWidget):
             self._set_writes_enabled(False)
             return
         self._set_writes_enabled(True)
-        self._date_value.setText(business_date)
+        # Clear first: a service failure below returns early, and the
+        # previous day's rows must not linger as if they were current.
+        # The date label is only stamped after every load succeeds.
+        self._date_value.setText("—")
+        self._cat_table.setRowCount(0)
+        self._exp_table.setRowCount(0)
+        self._totals_label.setText("—")
         try:
             self._categories_list = (
                 self._expenses.list_categories(active_only=False) or []
@@ -409,6 +415,8 @@ class ExpensePage(QWidget):
         self._totals_label.setText(
             f"{tr('exp.total_label')}: {h.format_pkr(total)}"
         )
+        # Every load succeeded — only now is the date label trustworthy.
+        self._date_value.setText(business_date)
 
     def _update_toggle_label(self) -> None:
         row = self._cat_table.currentRow()

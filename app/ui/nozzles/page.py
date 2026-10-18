@@ -175,6 +175,7 @@ class NozzleReadingsPage(QWidget):
         """Record every entered current reading through the service."""
         business_date = self._business_date()
         saved = 0
+        failures: list[str] = []
         for row, reading in enumerate(self._rows):
             edit = self._table.cellWidget(row, 3)
             text = edit.text().strip() if edit is not None else ""
@@ -190,15 +191,26 @@ class NozzleReadingsPage(QWidget):
                 if status_item is not None:
                     status_item.setText(tr("reading.status_recorded"))
             except Exception as exc:  # noqa: BLE001
+                if isinstance(exc, errors.BusinessRuleError):
+                    message = localize_error(exc)
+                else:
+                    message = tr("reading.status_error")
+                # The refresh() below rebuilds the table and wipes per-row
+                # status text, so collect failures for a summary instead.
+                failures.append(f"{reading.nozzle_code}: {message}")
                 if status_item is not None:
-                    message = (
-                        localize_error(exc)
-                        if isinstance(exc, errors.BusinessRuleError)
-                        else tr("reading.status_error")
-                    )
                     status_item.setText(f"{tr('reading.status_error')}: {message}")
         self.refresh()
-        if saved:
+        if failures:
+            h.show_error(
+                self,
+                ValueError(
+                    tr("reading.saved_with_errors").format(
+                        n=saved, errors="\n".join(failures)
+                    )
+                ),
+            )
+        elif saved:
             h.show_info(self, tr("reading.saved_ok").format(n=saved))
 
     def _on_record_event(self) -> None:

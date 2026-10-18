@@ -32,8 +32,17 @@ from datetime import datetime
 from pathlib import Path
 
 from PySide6.QtCore import QDate, Qt
-from PySide6.QtGui import QTextDocument
-from PySide6.QtPrintSupport import QPrintDialog
+
+try:  # printing is a nice-to-have; the page works without it
+    from PySide6.QtGui import QTextDocument
+    from PySide6.QtPrintSupport import QPrintDialog
+
+    _PRINT_AVAILABLE = True
+except ImportError:  # noqa: BLE001
+    QTextDocument = None  # type: ignore[assignment]
+    QPrintDialog = None  # type: ignore[assignment]
+    _PRINT_AVAILABLE = False
+
 from PySide6.QtWidgets import (
     QComboBox,
     QDateEdit,
@@ -721,6 +730,9 @@ class ReportsPage(QWidget):
     def _on_print(self) -> None:
         if self._last_html is None:
             h.show_error(self, ValueError(tr("reports.no_report")))
+            return
+        if not _PRINT_AVAILABLE:
+            h.show_error(self, ValueError(tr("reports.print_unavailable")))
             return
         document = QTextDocument(self)
         document.setHtml(self._last_html)

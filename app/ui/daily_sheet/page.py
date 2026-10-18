@@ -38,12 +38,13 @@ from app.services.price_service import PriceService
 from app.services.sales_service import SalesService
 from app.ui import _helpers as h
 
-#: Section tints: (background, border, title color).
+#: Section style: (header_bg, header_text, border, content_bg).
+#: Bold, vibrant headers — the client wants color, not pastels.
 _SECTION_STYLE = {
-    "cash": ("#eaf7ec", "#43a047", "#1b5e20"),
-    "sales": ("#e8f1fb", "#1e88e5", "#0d47a1"),
-    "stock": ("#fdf6e3", "#f9a825", "#7c5a00"),
-    "nozzles": ("#f3eafa", "#8e24aa", "#4a148c"),
+    "cash": ("#2e7d32", "#ffffff", "#2e7d32", "#f1f8e9"),
+    "sales": ("#1565c0", "#ffffff", "#1565c0", "#e3f2fd"),
+    "stock": ("#e65100", "#ffffff", "#e65100", "#fff3e0"),
+    "nozzles": ("#6a1b9a", "#ffffff", "#6a1b9a", "#f3e5f5"),
 }
 
 #: Fuel display order on the sheet (client lists diesel first).
@@ -159,21 +160,24 @@ class DailySheetPage(QWidget):
     # helpers
     # ------------------------------------------------------------------
     def _make_section(self, key: str, layout: QVBoxLayout) -> QGroupBox:
-        bg, border, _ = _SECTION_STYLE[key]
+        header_bg, header_text, border, content_bg = _SECTION_STYLE[key]
         group = QGroupBox(self)
         group.setProperty("sheet_section", key)
         group.setStyleSheet(
-            f"QGroupBox {{ font-size: 16px; font-weight: bold; "
-            f"border: 2px solid {border}; border-radius: 8px; "
-            f"background: {bg}; margin-top: 12px; }}"
+            f"QGroupBox {{ font-size: 18px; font-weight: bold; "
+            f"border: 3px solid {border}; border-radius: 10px; "
+            f"background: {content_bg}; margin-top: 14px; "
+            f"color: {header_text}; }}"
             f"QGroupBox::title {{ subcontrol-origin: margin; "
-            f"left: 12px; padding: 0 6px; }}"
+            f"left: 0px; padding: 8px 16px; "
+            f"background: {header_bg}; color: {header_text}; "
+            f"border-top-left-radius: 7px; border-top-right-radius: 7px; }}"
         )
         layout.addWidget(group)
         return group
 
     def _section_title_color(self, key: str) -> str:
-        return _SECTION_STYLE[key][2]
+        return _SECTION_STYLE[key][0]
 
     def _station_name(self) -> str:
         try:
@@ -210,7 +214,29 @@ class DailySheetPage(QWidget):
         label = QLabel(self)
         label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         if bold:
-            label.setStyleSheet("font-weight: bold; font-size: 14px;")
+            label.setStyleSheet(
+                "font-weight: bold; font-size: 17px; color: #111;"
+            )
+        else:
+            label.setStyleSheet("font-size: 15px; color: #222;")
+        return label
+
+    def _total_row_label(self, text: str, bg: str) -> QLabel:
+        """A big highlighted total label (colored background bar)."""
+        label = QLabel(text, self)
+        label.setStyleSheet(
+            f"font-weight: bold; font-size: 18px; color: #ffffff; "
+            f"background: {bg}; padding: 8px 12px; border-radius: 6px;"
+        )
+        return label
+
+    def _total_row_value(self, text: str, bg: str) -> QLabel:
+        label = QLabel(text, self)
+        label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        label.setStyleSheet(
+            f"font-weight: bold; font-size: 20px; color: #ffffff; "
+            f"background: {bg}; padding: 8px 12px; border-radius: 6px;"
+        )
         return label
 
     # ------------------------------------------------------------------
@@ -232,13 +258,17 @@ class DailySheetPage(QWidget):
                 "stock": self._stock_group,
                 "nozzles": self._nozzle_group,
             }[key]
+            header_bg, header_text, border, content_bg = _SECTION_STYLE[key]
             group.setStyleSheet(
-                f"QGroupBox {{ font-size: 16px; font-weight: bold; "
-                f"border: 2px solid {_SECTION_STYLE[key][1]}; "
-                f"border-radius: 8px; background: {_SECTION_STYLE[key][0]}; "
-                f"margin-top: 12px; color: {_SECTION_STYLE[key][2]}; }}"
+                f"QGroupBox {{ font-size: 18px; font-weight: bold; "
+                f"border: 3px solid {border}; border-radius: 10px; "
+                f"background: {content_bg}; margin-top: 14px; "
+                f"color: {header_text}; }}"
                 f"QGroupBox::title {{ subcontrol-origin: margin; "
-                f"left: 12px; padding: 0 6px; }}"
+                f"left: 0px; padding: 8px 16px; "
+                f"background: {header_bg}; color: {header_text}; "
+                f"border-top-left-radius: 7px; "
+                f"border-top-right-radius: 7px; }}"
             )
         self._add_receipt_btn.setText(tr("sheet.add_receipt"))
         self._add_expense_btn.setText(tr("sheet.add_expense"))
@@ -319,14 +349,20 @@ class DailySheetPage(QWidget):
         add_row("sheet.today_expenses", expenses["total_paisa"])
         for cat in expenses.get("by_category", []):
             cat_label = QLabel(f"    • {cat['category_en']}", self)
-            cat_label.setStyleSheet("color: #555;")
+            cat_label.setStyleSheet("color: #555; font-size: 14px;")
             cat_value = self._value_label()
             cat_value.setText(h.format_pkr(cat["total_paisa"]))
-            cat_value.setStyleSheet("color: #555;")
+            cat_value.setStyleSheet("color: #555; font-size: 14px;")
             self._cash_grid.addWidget(cat_label, row, 0)
             self._cash_grid.addWidget(cat_value, row, 1)
             row += 1
-        add_row("sheet.cash_total", pos.expected_paisa, bold=True)
+        # Big green total bar — the number the client looks for.
+        total_label = self._total_row_label(tr("sheet.cash_total"), "#2e7d32")
+        total_value = self._total_row_value(
+            h.format_pkr(pos.expected_paisa), "#2e7d32"
+        )
+        self._cash_grid.addWidget(total_label, row, 0)
+        self._cash_grid.addWidget(total_value, row, 1)
 
     def _on_add_receipt(self) -> None:
         business_date = self._business_date()
@@ -435,7 +471,9 @@ class DailySheetPage(QWidget):
         headers = ["", tr("sheet.litres"), tr("sheet.rate"), tr("sheet.amount")]
         for col, text in enumerate(headers):
             head = QLabel(text, self)
-            head.setStyleSheet("font-weight: bold; color: #0d47a1;")
+            head.setStyleSheet(
+                "font-weight: bold; font-size: 15px; color: #0d47a1;"
+            )
             if col:
                 head.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             self._sales_grid.addWidget(head, 0, col)
@@ -456,11 +494,14 @@ class DailySheetPage(QWidget):
             except Exception:  # noqa: BLE001 — price display is best-effort
                 rate = tr("common.not_entered")
             name = QLabel(tr(_FUEL_LABEL[code]), self)
+            name.setStyleSheet(
+                "font-weight: bold; font-size: 16px; color: #0d47a1;"
+            )
             litres = self._value_label()
             litres.setText(h.format_litres(litres_ml))
             rate_label = self._value_label()
             rate_label.setText(rate)
-            amount = self._value_label()
+            amount = self._value_label(bold=True)
             amount.setText(h.format_pkr(revenue))
             self._sales_grid.addWidget(name, row, 0)
             self._sales_grid.addWidget(litres, row, 1)
@@ -468,12 +509,14 @@ class DailySheetPage(QWidget):
             self._sales_grid.addWidget(amount, row, 3)
             row += 1
 
-        total_label = QLabel(tr("sheet.total_cash_of_sale"), self)
-        total_label.setStyleSheet("font-weight: bold; font-size: 14px;")
-        total_value = self._value_label(bold=True)
+        total_label = self._total_row_label(
+            tr("sheet.total_cash_of_sale"), "#1565c0"
+        )
+        total_value = self._total_row_value(
+            h.format_pkr(total_paisa), "#1565c0"
+        )
         # Display-only sum of the service-computed per-product revenues.
-        total_value.setText(h.format_pkr(total_paisa))
-        self._sales_grid.addWidget(total_label, row, 0)
+        self._sales_grid.addWidget(total_label, row, 0, 1, 3)
         self._sales_grid.addWidget(total_value, row, 3)
 
     # ------------------------------------------------------------------
@@ -501,7 +544,8 @@ class DailySheetPage(QWidget):
             grid.setColumnStretch(0, 1)
             header = QLabel(tr(_FUEL_LABEL.get(code, "sheet.fuel")), self)
             header.setStyleSheet(
-                "font-weight: bold; font-size: 15px; color: #7c5a00;"
+                "font-weight: bold; font-size: 18px; color: #ffffff; "
+                "background: #e65100; padding: 6px 12px; border-radius: 6px;"
             )
             grid.addWidget(header, 0, 0, 1, 2)
 
@@ -545,15 +589,24 @@ class DailySheetPage(QWidget):
             r += 1
 
             grid.addWidget(QLabel(tr("sheet.difference"), self), r, 0)
-            variance = self._value_label(bold=True)
+            variance = QLabel(self)
+            variance.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             variance.setText(h.format_litres(fuel["variance_ml"]))
             if fuel["variance_ml"] is not None and fuel["variance_ml"] < 0:
                 variance.setStyleSheet(
-                    "font-weight: bold; font-size: 14px; color: #c62828;"
+                    "font-weight: bold; font-size: 18px; color: #ffffff; "
+                    "background: #c62828; padding: 6px 12px; "
+                    "border-radius: 6px;"
                 )
             elif fuel["variance_ml"] is not None and fuel["variance_ml"] > 0:
                 variance.setStyleSheet(
-                    "font-weight: bold; font-size: 14px; color: #2e7d32;"
+                    "font-weight: bold; font-size: 18px; color: #ffffff; "
+                    "background: #2e7d32; padding: 6px 12px; "
+                    "border-radius: 6px;"
+                )
+            else:
+                variance.setStyleSheet(
+                    "font-weight: bold; font-size: 16px; color: #555;"
                 )
             grid.addWidget(variance, r, 1)
 
@@ -569,6 +622,7 @@ class DailySheetPage(QWidget):
         if business_date is None:
             return
         saved = 0
+        failures: list[str] = []
         for tank_id, edit in self._dip_edits.items():
             text = edit.text().strip()
             if not text:
@@ -580,10 +634,25 @@ class DailySheetPage(QWidget):
                 )
                 saved += 1
             except Exception as exc:  # noqa: BLE001
-                h.show_error(self, exc)
-                return
+                # Keep going so one bad tank doesn't block the rest; refresh
+                # afterwards clears saved edits so re-saving can't duplicate.
+                message = (
+                    localize_error(exc)
+                    if isinstance(exc, errors.BusinessRuleError)
+                    else tr("common.unexpected_error")
+                )
+                failures.append(f"{tr('sheet.tank')} {tank_id}: {message}")
         self.refresh()
-        if saved:
+        if failures:
+            h.show_error(
+                self,
+                ValueError(
+                    tr("sheet.dips_saved_with_errors").format(
+                        errors="\n".join(failures)
+                    )
+                ),
+            )
+        elif saved:
             h.show_info(self, tr("sheet.dips_saved"))
 
     # ------------------------------------------------------------------
@@ -681,6 +750,7 @@ class DailySheetPage(QWidget):
         if business_date is None:
             return
         saved = 0
+        failures: list[str] = []
         for reading in self._nozzle_rows:
             edit = self._nozzle_edits.get(reading.nozzle_id)
             status = self._nozzle_status.get(reading.nozzle_id)
@@ -696,13 +766,27 @@ class DailySheetPage(QWidget):
                 if status is not None:
                     status.setText(tr("sheet.status_recorded"))
             except errors.BusinessRuleError as exc:
+                message = f"{tr('sheet.status_error')}: {localize_error(exc)}"
+                failures.append(f"{reading.nozzle_code}: {message}")
                 if status is not None:
-                    status.setText(
-                        f"{tr('sheet.status_error')}: {localize_error(exc)}"
-                    )
+                    status.setText(message)
             except Exception:  # noqa: BLE001
+                failures.append(
+                    f"{reading.nozzle_code}: {tr('sheet.status_error')}"
+                )
                 if status is not None:
                     status.setText(tr("sheet.status_error"))
+        # refresh() rebuilds the grid and wipes per-row status, so report
+        # failures in a summary box the user will actually see.
         self.refresh()
-        if saved:
+        if failures:
+            h.show_error(
+                self,
+                ValueError(
+                    tr("sheet.readings_saved_with_errors").format(
+                        n=saved, errors="\n".join(failures)
+                    )
+                ),
+            )
+        elif saved:
             h.show_info(self, tr("sheet.readings_saved").format(n=saved))

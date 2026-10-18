@@ -451,19 +451,19 @@ class BackupsPage(QWidget):
         except Exception as exc:  # noqa: BLE001 — surface, don't crash
             h.show_error(self, exc)
             return
-        # Restore succeeded: the live database was replaced, so the app
-        # must restart before anything else is touched.
-        reply = QMessageBox.question(
+        # Restore succeeded: the live database file was replaced, so the app
+        # MUST quit now. There is deliberately no "No" option — any open
+        # SQLite connection still points at the pre-restore file, and
+        # continuing to work would write to the old database (silent
+        # split-brain / data loss).
+        QMessageBox.information(
             self,
             tr("common.info_title"),
             tr("backups.restore_ok") + "\n" + tr("backups.restart_now"),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.Yes,
         )
-        if reply == QMessageBox.StandardButton.Yes:
-            app = QApplication.instance()
-            if app is not None:
-                app.quit()
+        app = QApplication.instance()
+        if app is not None:
+            app.quit()
 
     def _on_choose_folder(self) -> None:
         if self._backup is None:
@@ -510,6 +510,17 @@ class BackupsPage(QWidget):
             h.show_error(
                 self, ValueError(tr("backups.backend_unavailable"))
             )
+            return
+        # Backups are the last line of defense — never delete them on a
+        # single accidental click.
+        reply = QMessageBox.question(
+            self,
+            tr("backups.prune_title"),
+            tr("backups.prune_confirm"),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
             return
         try:
             report = self._backup.prune_backups()

@@ -258,6 +258,7 @@ class LoginDialog(QDialog):
         self._auth = auth
         self.username: str | None = None
         self._reset_username = ""
+        self._login_busy = False
         self.setModal(True)
         self.setMinimumWidth(420)
         self.setWindowTitle(tr("auth.window_title"))
@@ -288,7 +289,7 @@ class LoginDialog(QDialog):
             lambda: self._go(self._login_page)
         )
         self._reset_questions_page.next_btn.clicked.connect(
-            lambda: self._go(self._reset_password_page)
+            self._do_verify_answers
         )
         self._reset_questions_page.back_btn.clicked.connect(
             lambda: self._go(self._reset_name_page)
@@ -339,11 +340,23 @@ class LoginDialog(QDialog):
         self._finish(info)
 
     def _do_login(self) -> None:
+        # In-flight guard: without it, double-clicking the button (or
+        # button + Enter) fires authenticate() twice and burns two of the
+        # five lockout attempts on a single typo.
+        if self._login_busy:
+            return
+        self._login_busy = True
+        try:
+            self._login_inner()
+        finally:
+            self._login_busy = False
+
+    def _login_inner(self) -> None:
         page = self._login_page
         page.set_error(None)
         try:
             info = self._auth.authenticate(
-                page.username_edit.text(), page.password_edit.text()
+                page.username_edit.text().strip(), page.password_edit.text()
             )
         except AuthError as exc:
             # Lockout carries its own message; bad credentials stay vague.
@@ -375,6 +388,24 @@ class LoginDialog(QDialog):
         self._reset_questions_page.a1_edit.clear()
         self._reset_questions_page.a2_edit.clear()
         self._go(self._reset_questions_page)
+
+    def _do_verify_answers(self) -> None:
+        """Verify security answers before showing the new-password page."""
+        page = self._reset_questions_page
+        page.set_error(None)
+        try:
+            self._auth.verify_answers(
+                self._reset_username,
+                page.a1_edit.text(),
+                page.a2_edit.text(),
+            )
+        except AuthError as exc:
+            page.set_error(self._friendly(exc))
+            return
+        except Exception:  # noqa: BLE001
+            page.set_error(tr("common.unexpected_error"))
+            return
+        self._go(self._reset_password_page)
 
     def _do_reset(self) -> None:
         page = self._reset_password_page

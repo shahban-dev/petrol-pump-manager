@@ -481,7 +481,7 @@ class FuelStockPage(QWidget):
                 self, errors.NotFoundError("No tanks configured.")
             )
             return
-        qty_edit = h.make_integer_edit(dialog)
+        qty_edit = h.make_signed_integer_edit(dialog)
         product_combo = QComboBox(dialog)
         for product in self._products:
             label, product_id = h.product_combo_entry(product)

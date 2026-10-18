@@ -572,31 +572,44 @@ class CashBookPage(QWidget):
         ):
             btn.setEnabled(enabled)
 
+    def _clear_figures(self) -> None:
+        """Blank every figure and table — honest empty state on failed load.
+
+        Called at the start of refresh() so a service failure never leaves
+        the previous day's figures on screen.
+        """
+        self._date_value.setText("—")
+        for widget in (
+            self._opening_value,
+            self._receipts_value,
+            self._payments_value,
+            self._expected_value,
+            self._physical_value,
+            self._difference_value,
+            self._shortage_value,
+            self._surplus_value,
+        ):
+            widget.setText("—")
+        self._settle_banner.setText("")
+        self._settle_table.setRowCount(0)
+        self._receipts_table.setRowCount(0)
+        self._payments_table.setRowCount(0)
+        self._entries_table.setRowCount(0)
+
     def refresh(self) -> None:
         """Reload every figure from the database."""
         business_date = self._business_date()
         if not business_date:
+            self._clear_figures()
             self._date_value.setText(tr("dash.no_open_day"))
-            for widget in (
-                self._opening_value,
-                self._receipts_value,
-                self._payments_value,
-                self._expected_value,
-                self._physical_value,
-                self._difference_value,
-                self._shortage_value,
-                self._surplus_value,
-            ):
-                widget.setText("—")
             self._settle_banner.setText(tr("dash.open_day_hint"))
-            self._settle_table.setRowCount(0)
-            self._receipts_table.setRowCount(0)
-            self._payments_table.setRowCount(0)
-            self._entries_table.setRowCount(0)
             self._set_writes_enabled(False)
             return
         self._set_writes_enabled(True)
-        self._date_value.setText(business_date)
+        # Clear first: a service failure below returns early, and the
+        # previous day's figures must not linger as if they were current.
+        # The date label is only stamped after every load succeeds.
+        self._clear_figures()
         try:
             position = self._cashbook.cash_position(business_date)
         except Exception as exc:  # noqa: BLE001 — show, don't crash
@@ -703,9 +716,14 @@ class CashBookPage(QWidget):
                     item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 self._entries_table.setItem(row, col, item)
         self._entries_table.resizeColumnsToContents()
+        # Every load succeeded — only now is the date label trustworthy.
+        self._date_value.setText(business_date)
 
     # ------------------------------------------------------------------
     def _refresh_receipts(self, business_date: str) -> None:
+        # Clear first: on failure the old rows must not linger.
+        self._receipts_list = []
+        self._receipts_table.setRowCount(0)
         try:
             self._receipts_list = (
                 self._cashbook.list_receipts(business_date) or []
@@ -740,6 +758,9 @@ class CashBookPage(QWidget):
         self._receipts_table.resizeColumnsToContents()
 
     def _refresh_payments(self, business_date: str) -> None:
+        # Clear first: on failure the old rows must not linger.
+        self._payments_list = []
+        self._payments_table.setRowCount(0)
         try:
             self._payments_list = (
                 self._cashbook.list_payments(business_date) or []

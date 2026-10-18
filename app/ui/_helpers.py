@@ -28,6 +28,19 @@ def make_integer_edit(parent: QWidget | None = None) -> QLineEdit:
     return edit
 
 
+def make_signed_integer_edit(parent: QWidget | None = None) -> QLineEdit:
+    """A QLineEdit that accepts signed integers (adjustments, corrections).
+
+    Same keystroke-level protection as :func:`make_integer_edit`, but the
+    leading minus sign is allowed — required anywhere a shortage or
+    reduction must be enterable (stock adjustments, opening-balance
+    corrections).
+    """
+    edit = QLineEdit(parent)
+    edit.setValidator(QIntValidator(-999_999_999, 999_999_999, edit))
+    return edit
+
+
 def make_decimal_edit(
     parent: QWidget | None = None, *, decimals: int = 2
 ) -> QLineEdit:

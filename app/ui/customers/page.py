@@ -209,7 +209,7 @@ class _AdjustOpeningDialog(QDialog):
             QLabel(tr("cust.current_opening"), self),
             QLabel(h.format_pkr(opening), self),
         )
-        self._amount_edit = h.make_integer_edit(self)
+        self._amount_edit = h.make_signed_integer_edit(self)
         self._amount_edit.setAlignment(Qt.AlignRight)
         form.addRow(QLabel(tr("cust.adjust_amount"), self), self._amount_edit)
         self._reason_edit = QTextEdit(self)
@@ -923,6 +923,9 @@ class CustomerCreditPage(QWidget):
         return str(code or "—")
 
     def _refresh_customers(self) -> None:
+        # Clear first: on failure the old rows must not linger.
+        self._customers = []
+        self._cust_table.setRowCount(0)
         try:
             all_customers = self._credit.list_customers(active_only=False) or []
         except Exception as exc:  # noqa: BLE001
@@ -1007,6 +1010,9 @@ class CustomerCreditPage(QWidget):
     # tickets tab
     # ------------------------------------------------------------------
     def _refresh_tickets(self) -> None:
+        # Clear first: on failure the old rows must not linger.
+        self._tickets = []
+        self._ticket_table.setRowCount(0)
         try:
             self._tickets = self._credit.day_tickets(self._business_date()) or []
         except Exception as exc:  # noqa: BLE001
@@ -1113,6 +1119,11 @@ class CustomerCreditPage(QWidget):
             if current is not None
             else None
         )
+        # Clear first (signals blocked): on failure the old list must not
+        # linger as if it were current.
+        self._ledger_customer_combo.blockSignals(True)
+        self._ledger_customer_combo.clear()
+        self._ledger_customer_combo.blockSignals(False)
         try:
             customers = self._credit.list_customers(active_only=False) or []
         except Exception as exc:  # noqa: BLE001

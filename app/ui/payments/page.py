@@ -313,6 +313,11 @@ class _AllocateDialog(QDialog):
         return h.dto_field(self._payment, "id", "payment_id", default=None) or self._payment_uuid
 
     def _reload(self) -> None:
+        # Clear first: on failure the previous payment's details must not
+        # linger as if they were current.
+        self._payment = None
+        self._summary_label.setText("—")
+        self._alloc_table.setRowCount(0)
         try:
             self._payment = self._payments.payment_details(self._payment_uuid)
         except Exception as exc:  # noqa: BLE001
@@ -888,6 +893,9 @@ class CustomerPaymentsPage(QWidget):
     # ------------------------------------------------------------------
     def refresh(self) -> None:
         """Reload the day's payments."""
+        # Clear first: on failure the old rows must not linger.
+        self._payments_list = []
+        self._pay_table.setRowCount(0)
         try:
             self._payments_list = (
                 self._payments.day_payments(self._business_date()) or []

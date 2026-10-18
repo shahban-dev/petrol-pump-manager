@@ -122,7 +122,12 @@ class _TxnDialog(QDialog):
             self._product_combo.addItem(f"{name} ({unit})", product)
         form.addRow(QLabel(tr("om.product"), self), self._product_combo)
 
-        self._qty_edit = h.make_integer_edit(self)
+        # Adjustment quantities are signed (shortage = negative); purchases
+        # and sales are positive-only.
+        if txn_type == "adjustment":
+            self._qty_edit = h.make_signed_integer_edit(self)
+        else:
+            self._qty_edit = h.make_integer_edit(self)
         self._qty_edit.setAlignment(Qt.AlignRight)
         if txn_type == "adjustment":
             form.addRow(
@@ -382,7 +387,12 @@ class OtherMaterialsPage(QWidget):
             self._set_writes_enabled(False)
             return
         self._set_writes_enabled(True)
-        self._date_value.setText(business_date)
+        # Clear first: a service failure below returns early, and the
+        # previous day's rows must not linger as if they were current.
+        # The date label is only stamped after every load succeeds.
+        self._date_value.setText("—")
+        self._products_table.setRowCount(0)
+        self._txns_table.setRowCount(0)
         # stock() returns master rows with the computed on-hand units —
         # the on-hand figure is service-computed, never derived here.
         try:
@@ -432,6 +442,8 @@ class OtherMaterialsPage(QWidget):
                     item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 self._txns_table.setItem(row, col, item)
         self._txns_table.resizeColumnsToContents()
+        # Every load succeeded — only now is the date label trustworthy.
+        self._date_value.setText(business_date)
 
     def _update_toggle_label(self) -> None:
         row = self._products_table.currentRow()

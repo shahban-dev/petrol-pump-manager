@@ -302,6 +302,38 @@ class AuthService(ServiceBase):
             )
         return row["security_q1"], row["security_q2"]
 
+    def verify_answers(self, username: str, answer1: str, answer2: str) -> None:
+        """Check both security answers without resetting anything.
+
+        Raises:
+            AuthError: if the answers do not match.
+        """
+        clean_username = (username or "").strip()
+        with self.read_connection() as conn:
+            row = self._get_user_row(conn, clean_username)
+        if row is None:
+            raise AuthError(
+                "Invalid username or password.",
+                key="err.auth_invalid_credentials",
+            )
+        ok1 = hmac.compare_digest(
+            _hash_secret(
+                _normalize_answer(answer1 or ""), row["security_a1_salt"]
+            ),
+            row["security_a1_hash"],
+        )
+        ok2 = hmac.compare_digest(
+            _hash_secret(
+                _normalize_answer(answer2 or ""), row["security_a2_salt"]
+            ),
+            row["security_a2_hash"],
+        )
+        if not (ok1 and ok2):
+            raise AuthError(
+                "The security answers do not match.",
+                key="err.auth_answers_wrong",
+            )
+
     def reset_password(
         self,
         username: str,
@@ -316,6 +348,8 @@ class AuthService(ServiceBase):
         A successful reset also clears any lockout.
         """
         self._require_password_strength(new_password)
+        # Verify answers first (raises AuthError on mismatch).
+        self.verify_answers(username, answer1, answer2)
         clean_username = (username or "").strip()
         with self.transaction() as conn:
             row = self._get_user_row(conn, clean_username)
@@ -323,23 +357,6 @@ class AuthService(ServiceBase):
                 raise AuthError(
                     "Invalid username or password.",
                     key="err.auth_invalid_credentials",
-                )
-            ok1 = hmac.compare_digest(
-                _hash_secret(
-                    _normalize_answer(answer1 or ""), row["security_a1_salt"]
-                ),
-                row["security_a1_hash"],
-            )
-            ok2 = hmac.compare_digest(
-                _hash_secret(
-                    _normalize_answer(answer2 or ""), row["security_a2_salt"]
-                ),
-                row["security_a2_hash"],
-            )
-            if not (ok1 and ok2):
-                raise AuthError(
-                    "The security answers do not match.",
-                    key="err.auth_answers_wrong",
                 )
             salt_hex, hash_hex = _new_hash(new_password)
             conn.execute(
