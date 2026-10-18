@@ -51,6 +51,11 @@ class DailyRegisterPage(QWidget):
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(12)
 
+        self._banner = h.make_page_banner(
+            self, tr("day.title"), color="green"
+        )
+        layout.insertWidget(0, self._banner)
+
         self._title = QLabel(self)
         self._title.setStyleSheet("font-size: 18px; font-weight: bold;")
         layout.addWidget(self._title)
@@ -399,6 +404,9 @@ class DailyRegisterPage(QWidget):
     def retranslate(self) -> None:
         """Re-apply all static texts (called on language change)."""
         self._title.setText(tr("day.title"))
+        banner_title = self._banner.findChild(QLabel, "pageBannerTitle")
+        if banner_title is not None:
+            banner_title.setText(tr("day.title"))
         self._date_label.setText(tr("day.date") + ":")
         self._status_group.setTitle(tr("day.status_section"))
         self._st_status_label.setText(tr("day.status_label") + ":")

@@ -73,6 +73,11 @@ class FuelDeliveriesPage(QWidget):
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(12)
 
+        self._banner = h.make_page_banner(
+            self, tr("delivery.title"), color="brown"
+        )
+        layout.insertWidget(0, self._banner)
+
         self._title = QLabel(self)
         self._title.setStyleSheet("font-size: 18px; font-weight: bold;")
         layout.addWidget(self._title)
@@ -180,6 +185,9 @@ class FuelDeliveriesPage(QWidget):
     def retranslate(self) -> None:
         """Re-apply all static texts (called on language change)."""
         self._title.setText(tr("delivery.title"))
+        banner_title = self._banner.findChild(QLabel, "pageBannerTitle")
+        if banner_title is not None:
+            banner_title.setText(tr("delivery.title"))
         self._date_label.setText(tr("delivery.date") + ":")
         self._refresh_btn.setText(tr("delivery.refresh"))
         self._deliveries_group.setTitle(tr("delivery.deliveries_section"))

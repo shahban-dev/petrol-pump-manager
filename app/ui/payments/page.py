@@ -798,6 +798,11 @@ class CustomerPaymentsPage(QWidget):
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(12)
 
+        self._banner = h.make_page_banner(
+            self, tr("pay.title"), color="blue"
+        )
+        layout.insertWidget(0, self._banner)
+
         self._title = QLabel(self)
         self._title.setStyleSheet("font-size: 18px; font-weight: bold;")
         layout.addWidget(self._title)
@@ -870,6 +875,9 @@ class CustomerPaymentsPage(QWidget):
     def retranslate(self) -> None:
         """Re-apply all static texts (called on language change)."""
         self._title.setText(tr("pay.title"))
+        banner_title = self._banner.findChild(QLabel, "pageBannerTitle")
+        if banner_title is not None:
+            banner_title.setText(tr("pay.title"))
         self._date_label.setText(tr("pay.date") + ":")
         self._refresh_btn.setText(tr("pay.refresh"))
         self._record_payment_btn.setText(tr("pay.record"))

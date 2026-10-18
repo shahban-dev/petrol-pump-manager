@@ -127,6 +127,11 @@ class BackupsPage(QWidget):
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(12)
 
+        self._banner = h.make_page_banner(
+            self, tr("backups.title"), color="slate"
+        )
+        layout.insertWidget(0, self._banner)
+
         self._title = QLabel(self)
         self._title.setStyleSheet("font-size: 18px; font-weight: bold;")
         layout.addWidget(self._title)
@@ -562,6 +567,9 @@ class BackupsPage(QWidget):
             Qt.RightToLeft if get_language() == "ur" else Qt.LeftToRight
         )
         self._title.setText(tr("backups.title"))
+        banner_title = self._banner.findChild(QLabel, "pageBannerTitle")
+        if banner_title is not None:
+            banner_title.setText(tr("backups.title"))
         self._backup_now_btn.setText(tr("backups.backup_now"))
         self._status_hint.setText(tr("backups.status_hint"))
         self._history_group.setTitle(tr("backups.history_section"))

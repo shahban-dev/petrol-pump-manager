@@ -163,6 +163,11 @@ class ReportsPage(QWidget):
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(12)
 
+        self._banner = h.make_page_banner(
+            self, tr("reports.title"), color="navy"
+        )
+        layout.insertWidget(0, self._banner)
+
         self._title = QLabel(self)
         self._title.setStyleSheet("font-size: 18px; font-weight: bold;")
         layout.addWidget(self._title)
@@ -276,6 +281,9 @@ class ReportsPage(QWidget):
         """Re-apply all static texts (called on language change)."""
         self._apply_direction()
         self._title.setText(tr("reports.title"))
+        banner_title = self._banner.findChild(QLabel, "pageBannerTitle")
+        if banner_title is not None:
+            banner_title.setText(tr("reports.title"))
         self._picker_label.setText(tr("reports.select_report") + ":")
         self._filters_group.setTitle(tr("reports.filters_section"))
         self._preview_group.setTitle(tr("reports.preview_section"))

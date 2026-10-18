@@ -10,7 +10,7 @@ from __future__ import annotations
 from decimal import Decimal, InvalidOperation
 
 from PySide6.QtGui import QDoubleValidator, QIntValidator
-from PySide6.QtWidgets import QLineEdit, QMessageBox, QWidget
+from PySide6.QtWidgets import QLabel, QLineEdit, QMessageBox, QWidget
 
 from app.calculations import money as calc
 from app.localization import localize_error, tr
@@ -54,6 +54,44 @@ def make_decimal_edit(
     validator.setNotation(QDoubleValidator.StandardNotation)
     edit.setValidator(validator)
     return edit
+
+
+def make_page_banner(
+    parent: QWidget | None,
+    title: str,
+    subtitle: str = "",
+    color: str = "navy",
+) -> QWidget:
+    """A bold colorful header banner for the top of a page.
+
+    ``color`` is one of: green, blue, orange, purple, red, teal,
+    indigo, navy, brown, slate. Each page uses its own color so the
+    app feels vibrant everywhere, not just on the Daily Sheet.
+    Returns the banner widget (already styled via theme.qss).
+    """
+    from PySide6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout
+
+    banner = QFrame(parent)
+    banner.setObjectName("pageBanner")
+    banner.setProperty("pageBannerBg", color)
+    layout = QHBoxLayout(banner)
+    layout.setContentsMargins(18, 12, 18, 12)
+    texts = QVBoxLayout()
+    texts.setSpacing(2)
+    title_label = QLabel(title, banner)
+    title_label.setObjectName("pageBannerTitle")
+    texts.addWidget(title_label)
+    if subtitle:
+        sub_label = QLabel(subtitle, banner)
+        sub_label.setObjectName("pageBannerSub")
+        sub_label.setWordWrap(True)
+        texts.addWidget(sub_label)
+    layout.addLayout(texts)
+    layout.addStretch(1)
+    # Re-apply dynamic property styling (needed when set after show).
+    banner.style().unpolish(banner)
+    banner.style().polish(banner)
+    return banner
 
 
 def parse_pkr_to_paisa(text: str) -> int:

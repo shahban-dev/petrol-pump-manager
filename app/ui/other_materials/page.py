@@ -259,6 +259,11 @@ class OtherMaterialsPage(QWidget):
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(12)
 
+        self._banner = h.make_page_banner(
+            self, tr("om.title"), color="orange"
+        )
+        layout.insertWidget(0, self._banner)
+
         self._title = QLabel(self)
         self._title.setStyleSheet("font-size: 18px; font-weight: bold;")
         layout.addWidget(self._title)
@@ -336,6 +341,9 @@ class OtherMaterialsPage(QWidget):
     def retranslate(self) -> None:
         """Re-apply all static texts (called on language change)."""
         self._title.setText(tr("om.title"))
+        banner_title = self._banner.findChild(QLabel, "pageBannerTitle")
+        if banner_title is not None:
+            banner_title.setText(tr("om.title"))
         self._date_label.setText(tr("om.date") + ":")
         self._refresh_btn.setText(tr("om.refresh"))
         self._products_group.setTitle(tr("om.products_section"))

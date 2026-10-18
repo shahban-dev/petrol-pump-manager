@@ -62,6 +62,11 @@ class SettingsPage(QWidget):
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(12)
 
+        self._banner = h.make_page_banner(
+            self, tr("settings.title"), color="brown"
+        )
+        layout.insertWidget(0, self._banner)
+
         self._title = QLabel(self)
         self._title.setStyleSheet("font-size: 18px; font-weight: bold;")
         layout.addWidget(self._title)
@@ -198,6 +203,9 @@ class SettingsPage(QWidget):
         self._language_combo.setItemText(1, tr("settings.urdu"))
         self._language_combo.setCurrentIndex(0 if current == "en" else 1)
         self._title.setText(tr("settings.title"))
+        banner_title = self._banner.findChild(QLabel, "pageBannerTitle")
+        if banner_title is not None:
+            banner_title.setText(tr("settings.title"))
         self._general_group.setTitle(tr("settings.general_section"))
         self._language_label.setText(tr("settings.language") + ":")
         self._language_hint.setText(tr("settings.language_hint"))
