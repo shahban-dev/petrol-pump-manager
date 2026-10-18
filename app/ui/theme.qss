@@ -1,0 +1,213 @@
+/* ============================================================
+   Petrol Pump Manager — station theme (v2)
+   Deep navy headers, teal money-in accents, amber/red alerts.
+   Clean cards, rounded corners, subtle borders. Readable, not garish.
+   ============================================================ */
+
+/* ---------- base ---------- */
+QWidget {
+    font-size: 13px;
+    color: #1e2a38;
+}
+QMainWindow, QDialog {
+    background-color: #eef2f7;
+}
+
+/* ---------- sidebar ---------- */
+QListWidget#sidebar {
+    background-color: #1a2f4b;
+    border: none;
+    outline: 0;
+    padding: 8px 4px;
+}
+QListWidget#sidebar::item {
+    color: #c9d6e6;
+    background: transparent;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin: 2px 6px;
+}
+QListWidget#sidebar::item:hover {
+    background: #27405f;
+    color: #ffffff;
+}
+QListWidget#sidebar::item:selected {
+    background: #0e9aa7;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+/* ---------- dashboard banner ---------- */
+QFrame#banner {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 #1a2f4b, stop:1 #27405f);
+    border-radius: 12px;
+}
+QLabel#bannerTitle {
+    color: #ffffff;
+    font-size: 22px;
+    font-weight: bold;
+}
+QLabel#bannerSub {
+    color: #a9c3dd;
+    font-size: 12px;
+}
+QLabel#bannerStatus {
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: bold;
+    background-color: #0e9aa7;
+    border-radius: 10px;
+    padding: 6px 14px;
+}
+QLabel#bannerStatus[status="closed"] {
+    background-color: #6b7a8d;
+}
+
+/* ---------- summary cards ---------- */
+QFrame.card {
+    background-color: #ffffff;
+    border: 1px solid #d9e2ec;
+    border-radius: 12px;
+}
+QLabel.cardTitle {
+    color: #5b6b7f;
+    font-size: 12px;
+    font-weight: bold;
+}
+QLabel.cardValue {
+    color: #1a2f4b;
+    font-size: 20px;
+    font-weight: bold;
+}
+QLabel.cardSub {
+    color: #7d8fa6;
+    font-size: 11px;
+}
+QFrame.cardAccentGreen { border-top: 4px solid #1a9e6b; }
+QFrame.cardAccentBlue  { border-top: 4px solid #2b7de0; }
+QFrame.cardAccentAmber { border-top: 4px solid #e8a13a; }
+QFrame.cardAccentRed   { border-top: 4px solid #d64545; }
+QFrame.cardAccentTeal  { border-top: 4px solid #0e9aa7; }
+
+/* ---------- group boxes ---------- */
+QGroupBox {
+    font-weight: bold;
+    color: #1a2f4b;
+    border: 1px solid #d9e2ec;
+    border-radius: 10px;
+    margin-top: 14px;
+    background-color: #ffffff;
+    padding-top: 6px;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    left: 12px;
+    padding: 2px 8px;
+    color: #ffffff;
+    background-color: #1a2f4b;
+    border-radius: 6px;
+}
+
+/* ---------- buttons ---------- */
+QPushButton {
+    background-color: #f0f4f9;
+    border: 1px solid #c4d0e0;
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: #1a2f4b;
+    font-weight: bold;
+}
+QPushButton:hover { background-color: #e2eaf4; }
+QPushButton:pressed { background-color: #d3deee; }
+QPushButton:disabled { color: #9aa8bb; background-color: #eef1f5; }
+
+QPushButton[btn="primary"] {
+    background-color: #1a2f4b;
+    border: 1px solid #1a2f4b;
+    color: #ffffff;
+}
+QPushButton[btn="primary"]:hover { background-color: #27405f; }
+
+QPushButton[btn="accent"] {
+    background-color: #0e9aa7;
+    border: 1px solid #0e9aa7;
+    color: #ffffff;
+    font-size: 14px;
+    padding: 12px 24px;
+}
+QPushButton[btn="accent"]:hover { background-color: #0b7f8a; }
+
+QPushButton[btn="danger"] {
+    background-color: #d64545;
+    border: 1px solid #d64545;
+    color: #ffffff;
+}
+QPushButton[btn="danger"]:hover { background-color: #b83838; }
+
+/* ---------- inputs ---------- */
+QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QDateEdit, QDateTimeEdit {
+    background-color: #ffffff;
+    border: 1px solid #c4d0e0;
+    border-radius: 6px;
+    padding: 6px 8px;
+    selection-background-color: #0e9aa7;
+}
+QLineEdit:focus, QComboBox:focus {
+    border: 2px solid #0e9aa7;
+    padding: 5px 7px;
+}
+QLineEdit[error="true"] {
+    border: 2px solid #d64545;
+}
+
+/* ---------- tables ---------- */
+QTableWidget {
+    background-color: #ffffff;
+    alternate-background-color: #f4f7fb;
+    gridline-color: #d9e2ec;
+    border: 1px solid #d9e2ec;
+    border-radius: 8px;
+    selection-background-color: #cde9ee;
+    selection-color: #1a2f4b;
+}
+QHeaderView::section {
+    background-color: #1a2f4b;
+    color: #ffffff;
+    font-weight: bold;
+    padding: 8px;
+    border: none;
+}
+
+/* ---------- misc ---------- */
+QLabel[alert="true"] { color: #d64545; font-weight: bold; }
+QLabel[ok="true"]    { color: #1a9e6b; font-weight: bold; }
+QLabel.hint { color: #7d8fa6; }
+QTabWidget::pane {
+    border: 1px solid #d9e2ec;
+    border-radius: 8px;
+    background: #ffffff;
+}
+QTabBar::tab {
+    background: #e2eaf4;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    padding: 8px 16px;
+    margin-right: 4px;
+}
+QTabBar::tab:selected {
+    background: #1a2f4b;
+    color: #ffffff;
+    font-weight: bold;
+}
+QMenuBar { background-color: #1a2f4b; color: #ffffff; }
+QMenuBar::item:selected { background-color: #27405f; }
+QMenu { background-color: #ffffff; border: 1px solid #d9e2ec; }
+QStatusBar { background-color: #e2eaf4; color: #5b6b7f; }
+QToolTip {
+    background-color: #1a2f4b;
+    color: #ffffff;
+    border: none;
+    padding: 6px;
+}

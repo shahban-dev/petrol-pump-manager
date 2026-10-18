@@ -91,6 +91,12 @@ datas = [
         str(PROJECT_ROOT / "app" / "database" / "views"),
         "app/database/views",
     ),
+    # Station stylesheet (app/main.py::_load_theme reads it next to the
+    # ``app`` package; tolerate-missing keeps dev runs working).
+    (
+        str(PROJECT_ROOT / "app" / "ui" / "theme.qss"),
+        "app/ui",
+    ),
 ]
 
 # Hidden imports. Modulegraph follows the static imports from app/main.py,

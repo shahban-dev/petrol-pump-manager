@@ -21,7 +21,7 @@ MIGRATIONS_DIR = Path(__file__).resolve().parent / "migrations"
 
 #: Highest schema version this build understands. Bump when a new migration
 #: file is added.
-CURRENT_SCHEMA_VERSION = 15
+CURRENT_SCHEMA_VERSION = 16
 
 _FILENAME_RE = re.compile(r"^(\d+)_([A-Za-z0-9_]+)\.sql$")
 

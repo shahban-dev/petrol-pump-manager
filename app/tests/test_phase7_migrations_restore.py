@@ -260,17 +260,22 @@ def _assert_upgrade_preserved(
 ) -> None:
     """Business rows survive the upgrade.
 
-    Two tables can legitimately change under the newest migration and are
-    asserted precisely instead of byte-compared:
+    Three tables can legitimately change under the newest migrations and
+    are asserted precisely instead of byte-compared:
 
     * ``schema_migrations`` gains exactly the new version row;
     * ``meter_events`` — see ``_assert_meter_events_preserved``;
     * ``backup_history`` gains the nullable ``trigger`` column (migration
       015, appended last); pre-015 rows come back with ``trigger`` NULL —
       the day-close auto-backup hook writes rows here, so this table is
-      no longer guaranteed empty.
+      no longer guaranteed empty;
+    * ``users`` is created empty by migration 016 (owner auth) — it did
+      not exist before the upgrade.
     """
-    assert set(after) == set(before)
+    expected_new = {"users"}
+    assert set(after) == set(before) | expected_new
+    for table in expected_new:
+        assert after[table] == [], f"table {table} must be empty after upgrade"
     before_versions = [row[0] for row in before["schema_migrations"]]
     after_versions = [row[0] for row in after["schema_migrations"]]
     assert after_versions == before_versions + [CURRENT_SCHEMA_VERSION]
@@ -285,10 +290,15 @@ def _assert_upgrade_preserved(
             after_rows = after[table]
             assert len(after_rows) == len(rows)
             for after_row, before_row in zip(after_rows, rows):
-                # Pre-015 columns unchanged; the appended trigger column
-                # reads back NULL for rows written before 015.
-                assert after_row[:-1] == before_row
-                assert after_row[-1] is None
+                if len(after_row) == len(before_row):
+                    # Both sides already carry the trigger column
+                    # (upgrade from 015+): rows must be byte-identical.
+                    assert after_row == before_row
+                else:
+                    # Pre-015 columns unchanged; the appended trigger column
+                    # reads back NULL for rows written before 015.
+                    assert after_row[:-1] == before_row
+                    assert after_row[-1] is None
             continue
         assert after[table] == rows, f"table {table} changed by upgrade"
 

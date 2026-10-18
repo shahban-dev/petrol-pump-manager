@@ -875,7 +875,9 @@ def test_sidebar_wiring(qapp, dialogs, tmp_path):
                 assert labels[reports_index - 1] == tr("nav.expenses")
                 assert labels[reports_index + 1] == tr("nav.backups")
                 widget = window._pages.widget(reports_index)
-                assert isinstance(widget, ReportsPage)
+                # Pages are wrapped in QScrollArea (v2 responsive fix).
+                inner = widget.widget() if hasattr(widget, "widget") else widget
+                assert isinstance(inner, ReportsPage)
             else:
                 assert tr("nav.reports") not in labels
         finally:

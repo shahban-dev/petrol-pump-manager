@@ -13,12 +13,14 @@ import os
 import sys
 
 from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtWidgets import QApplication, QDialog, QMessageBox
 
 from app import config
 from app.bootstrap import bootstrap
 from app.config import AppStartupError
 from app.localization import get_language, tr
+from app.services.auth_service import AuthService
+from app.ui.auth.dialog import LoginDialog
 from app.ui.main_window import MainWindow
 
 _LOG = logging.getLogger("petrol_pump_manager")
@@ -26,6 +28,18 @@ _LOG = logging.getLogger("petrol_pump_manager")
 # Smoke-test hook: when set, the event loop quits after N milliseconds so
 # `python -m app.main` can be exercised headlessly (QT_QPA_PLATFORM=offscreen).
 _SMOKE_QUIT_ENV = "PPM_SMOKE_QUIT_MS"
+
+
+def _load_theme(app: QApplication) -> None:
+    """Apply the station stylesheet; tolerate a missing file."""
+    try:
+        theme_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "ui", "theme.qss"
+        )
+        with open(theme_path, "r", encoding="utf-8") as handle:
+            app.setStyleSheet(handle.read())
+    except OSError as exc:
+        _LOG.warning("Theme not loaded (%s); using default style.", exc)
 
 
 def _maybe_shutdown_backup() -> None:
@@ -73,6 +87,7 @@ def main() -> int:
     app.setApplicationName(config.APP_NAME)
     app.setOrganizationName(config.ORG_NAME)
     app.setApplicationVersion(config.APP_VERSION)
+    _load_theme(app)
 
     try:
         result = bootstrap()
@@ -81,7 +96,14 @@ def main() -> int:
         _LOG.error("Startup failed: %s", exc)
         return 1
 
-    window = MainWindow(result)
+    # Owner gate: first launch creates the account, later launches log in.
+    auth = AuthService(result.db_manager)
+    login = LoginDialog(auth)
+    if login.exec() != QDialog.Accepted:
+        _LOG.info("Login cancelled; exiting cleanly.")
+        return 0
+
+    window = MainWindow(result, actor=login.username)
     window.show()
 
     smoke_quit = os.environ.get(_SMOKE_QUIT_ENV)

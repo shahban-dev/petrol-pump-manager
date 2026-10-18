@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QMainWindow,
     QMessageBox,
+    QScrollArea,
     QStackedWidget,
     QWidget,
 )
@@ -32,6 +33,7 @@ from app.services.business_day_service import BusinessDayService
 from app.services.nozzle_service import NozzleService
 from app.ui.customers.page import CustomerCreditPage
 from app.ui.daily_register.page import DailyRegisterPage
+from app.ui.daily_sheet.page import DailySheetPage
 from app.ui.dashboard.page import DashboardPage
 from app.ui.fuel_deliveries.page import FuelDeliveriesPage
 from app.ui.fuel_stock.page import FuelStockPage
@@ -90,23 +92,25 @@ except ImportError:  # pragma: no cover — interim state before Phase-8 lands
 
 _BACKUPS_AVAILABLE = BackupService is not None and BackupsPage is not None
 
-#: Sidebar order — DashboardPage's navigation buttons use these indexes.
+#: Sidebar order — the Daily Sheet is the daily workflow, so it comes first.
+#: DashboardPage's navigation buttons use these indexes.
 #: Conditional pages (Reports, Backups) occupy their slot only when their
 #: service landed; these are the maximum-index positions.
-_PAGE_DASHBOARD = 0
-_PAGE_REGISTER = 1
-_PAGE_READINGS = 2
-_PAGE_FUEL_STOCK = 3
-_PAGE_FUEL_DELIVERIES = 4
-_PAGE_CUSTOMERS = 5
-_PAGE_PAYMENTS = 6
-_PAGE_CASHBOOK = 7
-_PAGE_SUPPLIERS = 8
-_PAGE_OTHER_MATERIALS = 9
-_PAGE_EXPENSES = 10
-_PAGE_REPORTS = 11
-_PAGE_BACKUPS = 12
-_PAGE_SETTINGS = 13
+_PAGE_DAILY_SHEET = 0
+_PAGE_DASHBOARD = 1
+_PAGE_REGISTER = 2
+_PAGE_READINGS = 3
+_PAGE_FUEL_STOCK = 4
+_PAGE_FUEL_DELIVERIES = 5
+_PAGE_CUSTOMERS = 6
+_PAGE_PAYMENTS = 7
+_PAGE_CASHBOOK = 8
+_PAGE_SUPPLIERS = 9
+_PAGE_OTHER_MATERIALS = 10
+_PAGE_EXPENSES = 11
+_PAGE_REPORTS = 12
+_PAGE_BACKUPS = 13
+_PAGE_SETTINGS = 14
 
 _logger = logging.getLogger(__name__)
 
@@ -140,29 +144,36 @@ def apply_language_direction(widget=None) -> None:
 class MainWindow(QMainWindow):
     """Sidebar + stacked pages around the bootstrapped database."""
 
-    def __init__(self, bootstrap_result) -> None:
+    def __init__(self, bootstrap_result, actor: str | None = None) -> None:
         super().__init__()
         self._result = bootstrap_result
+        self._actor = actor
         db_manager = bootstrap_result.db_manager
-        self._day_service = BusinessDayService(db_manager)
-        self._nozzle_service = NozzleService(db_manager)
-        self._price_service = PriceService(db_manager)
-        self._delivery_service = DeliveryService(db_manager)
-        self._inventory_service = InventoryService(db_manager)
-        self._sales_service = SalesService(db_manager)
+        self._day_service = BusinessDayService(db_manager, actor=actor)
+        self._nozzle_service = NozzleService(db_manager, actor=actor)
+        self._price_service = PriceService(db_manager, actor=actor)
+        self._delivery_service = DeliveryService(db_manager, actor=actor)
+        self._inventory_service = InventoryService(db_manager, actor=actor)
+        self._sales_service = SalesService(db_manager, actor=actor)
         self._credit_service = (
-            CustomerCreditService(db_manager) if _PHASE4_AVAILABLE else None
+            CustomerCreditService(db_manager, actor=actor)
+            if _PHASE4_AVAILABLE
+            else None
         )
         self._payment_service = (
-            PaymentService(db_manager) if _PHASE4_AVAILABLE else None
+            PaymentService(db_manager, actor=actor) if _PHASE4_AVAILABLE else None
         )
-        self._cashbook_service = CashbookService(db_manager)
-        self._expense_service = ExpenseService(db_manager)
-        self._supplier_service = SupplierService(db_manager)
-        self._accounting_service = AccountingService(db_manager)
-        self._other_materials_service = OtherMaterialsService(db_manager)
+        self._cashbook_service = CashbookService(db_manager, actor=actor)
+        self._expense_service = ExpenseService(db_manager, actor=actor)
+        self._supplier_service = SupplierService(db_manager, actor=actor)
+        self._accounting_service = AccountingService(db_manager, actor=actor)
+        self._other_materials_service = OtherMaterialsService(
+            db_manager, actor=actor
+        )
         self._reporting_service = (
-            ReportingService(db_manager) if _REPORTS_AVAILABLE else None
+            ReportingService(db_manager, actor=actor)
+            if _REPORTS_AVAILABLE
+            else None
         )
         self._backup_service = self._make_backup_service(db_manager)
 
@@ -250,10 +261,22 @@ class MainWindow(QMainWindow):
         layout.setSpacing(0)
 
         self._sidebar = QListWidget(self)
+        self._sidebar.setObjectName("sidebar")
         self._sidebar.setMaximumWidth(200)
         self._sidebar.setMinimumWidth(160)
         self._pages = QStackedWidget(self)
 
+        self._daily_sheet = DailySheetPage(
+            db_manager,
+            self._day_service,
+            self._cashbook_service,
+            self._expense_service,
+            self._sales_service,
+            self._inventory_service,
+            self._nozzle_service,
+            self._price_service,
+            self,
+        )
         self._dashboard = DashboardPage(
             self._day_service,
             self._nozzle_service,
@@ -261,15 +284,20 @@ class MainWindow(QMainWindow):
             self,
             cashbook_service=self._cashbook_service,
             accounting_service=self._accounting_service,
+            sales_service=self._sales_service,
+            inventory_service=self._inventory_service,
+            credit_service=self._credit_service,
         )
         self._register = DailyRegisterPage(self._day_service, self)
         self._readings = NozzleReadingsPage(self._nozzle_service, self)
         self._page_widgets: list = [
+            self._daily_sheet,
             self._dashboard,
             self._register,
             self._readings,
         ]
         self._sidebar_keys = [
+            "nav.daily_sheet",
             "nav.dashboard",
             "nav.daily_register",
             "nav.nozzle_readings",
@@ -356,13 +384,22 @@ class MainWindow(QMainWindow):
         self._page_widgets.append(self._settings)
         self._sidebar_keys.append("nav.settings")
         for widget in self._page_widgets:
-            self._pages.addWidget(widget)
+            # Scroll fix: every page scrolls vertically inside the stacked
+            # widget so nothing is half-cut on small (e.g. 1366x768) screens.
+            scroll = QScrollArea(self)
+            scroll.setWidgetResizable(True)
+            scroll.setWidget(widget)
+            self._pages.addWidget(scroll)
 
         self._sidebar_items: list[QListWidgetItem] = []
         for key in self._sidebar_keys:
             item = QListWidgetItem(tr(key), self._sidebar)
             self._sidebar_items.append(item)
-        self._sidebar.setCurrentRow(_PAGE_DASHBOARD)
+        # Page-key -> sidebar index, for string navigation (e.g. "daily_sheet").
+        self._page_key_index = {
+            key: idx for idx, key in enumerate(self._sidebar_keys)
+        }
+        self._sidebar.setCurrentRow(_PAGE_DAILY_SHEET)
         self._sidebar.currentRowChanged.connect(self._on_sidebar_changed)
 
         layout.addWidget(self._sidebar)
@@ -378,8 +415,19 @@ class MainWindow(QMainWindow):
         if callable(refresh):
             refresh()
 
-    def navigate_to(self, index: int) -> None:
-        """Switch pages (used by dashboard shortcut buttons)."""
+    def navigate_to(self, index: int | str) -> None:
+        """Switch pages (used by dashboard shortcut buttons).
+
+        Accepts a sidebar index or a page key such as ``"daily_sheet"``
+        (resolved against the sidebar keys; falls back to the daily
+        register when the key is not registered).
+        """
+        if isinstance(index, str):
+            key = f"nav.{index}"
+            target = self._page_key_index.get(key)
+            if target is None:
+                target = _PAGE_REGISTER
+            index = target
         self._sidebar.setCurrentRow(index)
 
     def _on_language_changed(self) -> None:

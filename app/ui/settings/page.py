@@ -81,8 +81,12 @@ class SettingsPage(QWidget):
         self._language_hint.setStyleSheet("color: gray;")
         self._operator_label = QLabel(self)
         self._operator_edit = QLineEdit(self)
+        self._station_label = QLabel(self)
+        self._station_edit = QLineEdit(self)
+        self._station_edit.setPlaceholderText(tr("settings.station_name_hint"))
         general_form.addRow(self._language_label, self._language_combo)
         general_form.addRow(self._language_hint)
+        general_form.addRow(self._station_label, self._station_edit)
         general_form.addRow(self._operator_label, self._operator_edit)
         layout.addWidget(self._general_group)
 
@@ -145,6 +149,7 @@ class SettingsPage(QWidget):
             conn = self._db.connect()
             try:
                 operator = self._repo.get_setting(conn, "operator_name") or ""
+                station = self._repo.get_setting(conn, "station_name") or ""
                 version = get_schema_version(conn)
             finally:
                 conn.close()
@@ -152,6 +157,7 @@ class SettingsPage(QWidget):
             h.show_error(self, exc)
             return
         self._operator_edit.setText(operator)
+        self._station_edit.setText(station)
         self._db_path_value.setText(str(self._db.db_path))
         self._schema_value.setText(str(version))
         self._storage_db_value.setText(str(config.db_path()))
@@ -161,12 +167,14 @@ class SettingsPage(QWidget):
     def _on_save(self) -> None:
         new_language = self._language_combo.currentData()
         operator = self._operator_edit.text().strip()
+        station = self._station_edit.text().strip()
         language_changed = new_language != get_language()
         try:
             conn = self._db.connect()
             try:
                 conn.execute("BEGIN IMMEDIATE")
                 self._repo.set_setting(conn, "operator_name", operator)
+                self._repo.set_setting(conn, "station_name", station)
                 conn.commit()
             except Exception:
                 conn.rollback()
@@ -193,6 +201,8 @@ class SettingsPage(QWidget):
         self._general_group.setTitle(tr("settings.general_section"))
         self._language_label.setText(tr("settings.language") + ":")
         self._language_hint.setText(tr("settings.language_hint"))
+        self._station_label.setText(tr("settings.station_name") + ":")
+        self._station_edit.setPlaceholderText(tr("settings.station_name_hint"))
         self._operator_label.setText(tr("settings.operator_name") + ":")
         self._save_btn.setText(tr("settings.save"))
         self._db_group.setTitle(tr("settings.database_section"))

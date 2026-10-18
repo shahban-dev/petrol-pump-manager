@@ -571,10 +571,10 @@ def test_pre_upgrade_safety_backup_then_migrate_015(tmp_path, monkeypatch):
 
     result = bootstrap(v14_file)
 
-    assert result.schema_version == 15
+    assert result.schema_version == 16
     verify = sqlite3.connect(str(v14_file))
     try:
-        assert migrator.get_schema_version(verify) == 15
+        assert migrator.get_schema_version(verify) == 16
     finally:
         verify.close()
     safeties = list(backup_dir.glob("PetrolPump_Safety_*.sqlite"))
@@ -678,16 +678,17 @@ def test_restore_confirmation_required_changes_nothing(
 # i18n parity
 # ---------------------------------------------------------------------------
 def test_i18n_key_parity():
-    """``en.json`` and ``ur.json`` carry exactly the same keys (1039 each
-    after the Phase-8 additions) — no untranslated lookup can KeyError."""
+    """``en.json`` and ``ur.json`` carry exactly the same keys (1141 each
+    after the v2 auth/dashboard/settings additions) — no untranslated
+    lookup can KeyError."""
     from app import localization
 
     base = Path(localization.__file__).resolve().parent
     en = json.loads((base / "en.json").read_text(encoding="utf-8"))
     ur = json.loads((base / "ur.json").read_text(encoding="utf-8"))
     assert set(en) == set(ur)
-    assert len(en) == 1039
-    assert len(ur) == 1039
+    assert len(en) == 1141
+    assert len(ur) == 1141
 
 
 # ---------------------------------------------------------------------------

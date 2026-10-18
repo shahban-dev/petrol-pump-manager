@@ -1282,7 +1282,7 @@ def test_real_phase5_pages(qapp, dialogs, tmp_path):
         finally:
             mat_page.close()
 
-        # -- dashboard: cash & P&L card from the real services ------------
+        # -- dashboard: cash card from the real services -------------------
         from app.services.nozzle_service import NozzleService
 
         dash = DashboardPage(
@@ -1295,15 +1295,14 @@ def test_real_phase5_pages(qapp, dialogs, tmp_path):
         dash.show()
         try:
             dash.refresh()
-            assert dash._cash_group.title() == tr("dash.cash_pnl")
-            # Expected = 500 opening + (50 − 50) receipts
-            # − (20 + (120 − 120) + (250 − 250) + 1000) payments = −520.00
-            # (every reversed row nets to 0 in the effective figures).
-            assert dash._cash_expected_value.text() == "-520.00"
-            assert dash._go_cashbook_btn.text() == tr("dash.go_cashbook")
-            assert dash._go_suppliers_btn.text() == tr("dash.go_suppliers")
-            assert dash._go_expenses_btn.text() == tr("dash.go_expenses")
-            assert dash._go_materials_btn.text() == tr("dash.go_other_materials")
+            # Cash card shows physical cash as the value and the expected
+            # figure in the sub-line. Expected = 500 opening + (50 − 50)
+            # receipts − (20 + (120 − 120) + (250 − 250) + 1000) payments
+            # = −520.00 (every reversed row nets to 0 in the effective
+            # figures).
+            assert tr("dash2.expected") in dash._card_cash.sub.text()
+            assert "-520.00" in dash._card_cash.sub.text()
+            assert dash._open_sheet_btn.text() == tr("dash2.open_daily_sheet")
         finally:
             dash.close()
     finally:

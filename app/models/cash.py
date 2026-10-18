@@ -3,10 +3,11 @@
 Accounting rules implemented by the services in
 :mod:`app.services.cashbook_service`:
 
-* **Effective-amount rule** (matches the v10 views): a posted row counts
-  ``+amount``; a row flipped to ``status='reversed'`` counts ``0`` (the flip
-  is only a marker — the row is never erased); a reversal row
-  (``reverses_uuid IS NOT NULL`` / ``is_reversal=1``) counts ``-amount``.
+* **Effective-amount rule** (corrected rule, migration 011, mirroring 009):
+  a posted row counts ``+amount``; a row flipped to ``status='reversed'``
+  keeps its ``+amount`` contribution (the flip is only a marker — the row
+  is never erased); a reversal row (``reverses_uuid IS NOT NULL`` /
+  ``is_reversal=1``) counts ``-amount``. Net effect of a reversal: ``0``.
 * **Settlement identity** (design §6): per fuel product,
   ``meter_revenue = cash + bank + paid_now_on_ticket + receivable + other``.
   ``sales_settlements`` rows are a *classification* of meter revenue, not

@@ -652,14 +652,14 @@ def test_main_window_sidebar_wiring(qapp, dialogs, tmp_path):
     win = MainWindow(result)
     win.show()
     try:
-        assert _PAGE_FUEL_STOCK == 3
-        assert _PAGE_FUEL_DELIVERIES == 4
-        assert win._sidebar.item(3).text() == tr("nav.fuel_stock")
-        assert win._sidebar.item(4).text() == tr("nav.fuel_deliveries")
+        assert _PAGE_FUEL_STOCK == 4
+        assert _PAGE_FUEL_DELIVERIES == 5
+        assert win._sidebar.item(4).text() == tr("nav.fuel_stock")
+        assert win._sidebar.item(5).text() == tr("nav.fuel_deliveries")
         win.navigate_to(_PAGE_FUEL_STOCK)
-        assert isinstance(win._pages.currentWidget(), FuelStockPage)
+        assert isinstance(win._pages.currentWidget().widget(), FuelStockPage)
         win.navigate_to(_PAGE_FUEL_DELIVERIES)
-        assert isinstance(win._pages.currentWidget(), FuelDeliveriesPage)
+        assert isinstance(win._pages.currentWidget().widget(), FuelDeliveriesPage)
         # Sidebar count matches the page stack (14 once the Phase-5
         # services land and the cash-book / supplier / materials / expense
         # pages are added, plus the Phase-6 Reports page when its service
@@ -671,9 +671,9 @@ def test_main_window_sidebar_wiring(qapp, dialogs, tmp_path):
             )
             from app.services.payment_service import PaymentService  # noqa: F401
 
-            expected_pages = 12
+            expected_pages = 13
         except ImportError:
-            expected_pages = 10
+            expected_pages = 11
         try:
             from app.services.reporting_service import (  # noqa: F401
                 ReportingService,

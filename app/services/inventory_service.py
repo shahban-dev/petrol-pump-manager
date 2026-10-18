@@ -299,6 +299,66 @@ class InventoryService(ServiceBase):
             )
         return positions
 
+    def fuel_stock_summary(self, business_date: str) -> list[dict]:
+        """Per-fuel stock summary for a business day (the client's sheet).
+
+        Aggregates the per-tank positions by fuel product, in the client's
+        own terms: total stock (opening), sold today, new stock (received),
+        total including new stock (theoretical), dip reading (physical),
+        stock as per dip, and difference (physical − theoretical).
+
+        ``physical_ml``/``variance_ml`` are None for a fuel until every
+        one of its tanks has a dip reading that day.
+        """
+        positions = self.stock_positions(business_date)
+        by_fuel: dict[str, dict] = {}
+        for pos in positions:
+            fuel = pos.fuel_product_code
+            agg = by_fuel.setdefault(
+                fuel,
+                {
+                    "fuel_product_code": fuel,
+                    "opening_ml": 0,
+                    "received_ml": 0,
+                    "sold_ml": 0,
+                    "adjustments_ml": 0,
+                    "theoretical_ml": 0,
+                    "physical_ml": 0,
+                    "tanks_with_dip": 0,
+                    "tank_count": 0,
+                },
+            )
+            agg["opening_ml"] += pos.opening_ml
+            agg["received_ml"] += pos.received_ml
+            agg["sold_ml"] += pos.sold_ml
+            agg["adjustments_ml"] += pos.adjustments_ml
+            agg["theoretical_ml"] += pos.theoretical_ml
+            agg["tank_count"] += 1
+            if pos.physical_ml is not None:
+                agg["physical_ml"] += pos.physical_ml
+                agg["tanks_with_dip"] += 1
+        summary = []
+        for agg in by_fuel.values():
+            if agg["tanks_with_dip"] == agg["tank_count"] and agg["tank_count"] > 0:
+                physical_ml: int | None = agg["physical_ml"]
+                variance_ml: int | None = physical_ml - agg["theoretical_ml"]
+            else:
+                physical_ml = None
+                variance_ml = None
+            summary.append(
+                {
+                    "fuel_product_code": agg["fuel_product_code"],
+                    "opening_ml": agg["opening_ml"],
+                    "received_ml": agg["received_ml"],
+                    "sold_ml": agg["sold_ml"],
+                    "adjustments_ml": agg["adjustments_ml"],
+                    "theoretical_ml": agg["theoretical_ml"],
+                    "physical_ml": physical_ml,
+                    "variance_ml": variance_ml,
+                }
+            )
+        return summary
+
     def _opening_stock_ml_conn(
         self, conn, business_date: str, fuel_product_id: int
     ) -> int:

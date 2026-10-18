@@ -1684,6 +1684,48 @@ class CashbookService(ServiceBase):
             rows = self._cash.list_payments(conn, business_date)
         return [_to_payment_info(row) for row in rows]
 
+    def other_income_total(self, business_date: str) -> dict:
+        """The day's other income, net of reversals.
+
+        "Other income" = ``credit_recovery`` (old debt recovered — the
+        client's "recovered from whom fuel was given on borrow") plus
+        ``other_receipt``. Both are cash receipts, never revenue (design
+        §6: recovering old debt is a receipt, not a sale).
+
+        Returns ``{"credit_recovery_paisa", "other_receipt_paisa",
+        "total_paisa", "recoveries"}`` where ``recoveries`` lists each
+        debt-recovery receipt with the customer it came from.
+        """
+        if not timecalc.is_valid_business_date(business_date):
+            raise errors.ValidationError(
+                f"Invalid business date: {business_date!r}.",
+                key="err.invalid_business_date",
+                params={"day_date": business_date},
+            )
+        with self.read_connection() as conn:
+            rows = self._cash.list_receipts(conn, business_date)
+        infos = [_to_receipt_info(row) for row in rows]
+        recovery = [
+            info for info in infos if info.category == "credit_recovery"
+        ]
+        other = [info for info in infos if info.category == "other_receipt"]
+        recovery_paisa = sum(i.effective_paisa for i in recovery)
+        other_paisa = sum(i.effective_paisa for i in other)
+        return {
+            "credit_recovery_paisa": recovery_paisa,
+            "other_receipt_paisa": other_paisa,
+            "total_paisa": recovery_paisa + other_paisa,
+            "recoveries": [
+                {
+                    "customer_name": i.customer_name,
+                    "amount_paisa": i.effective_paisa,
+                    "occurred_at_utc": i.occurred_at_utc,
+                    "remarks": i.remarks,
+                }
+                for i in recovery
+            ],
+        }
+
     def cashbook_entries(self, business_date: str) -> list[dict]:
         """The day's cash-book rows from ``v_cashbook`` (signed, chronological)."""
         if not timecalc.is_valid_business_date(business_date):

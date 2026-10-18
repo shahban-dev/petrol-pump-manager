@@ -173,7 +173,9 @@ def test_language_switch_to_urdu(window):
     assert get_language() == "ur"
     assert window.layoutDirection() == Qt.RightToLeft
     assert window.windowTitle() == "پیٹرول پمپ مینیجر"
-    assert window._sidebar.item(0).text() == "ڈیش بورڈ"
+    # Daily Sheet is the first sidebar item (v2 daily workflow order).
+    assert window._sidebar.item(0).text() == "یومیہ شیٹ"
+    assert window._sidebar.item(1).text() == "ڈیش بورڈ"
 
     # The operator name was persisted for audit attribution.
     conn = window._day_service._db.connect()

@@ -1256,56 +1256,56 @@ def test_real_main_window_sidebar(qapp, dialogs, tmp_path):
     win = MainWindow(result)
     win.show()
     try:
-        assert _PAGE_CUSTOMERS == 5
-        assert _PAGE_PAYMENTS == 6
-        assert _PAGE_CASHBOOK == 7
-        assert _PAGE_SUPPLIERS == 8
-        assert _PAGE_OTHER_MATERIALS == 9
-        assert _PAGE_EXPENSES == 10
+        assert _PAGE_CUSTOMERS == 6
+        assert _PAGE_PAYMENTS == 7
+        assert _PAGE_CASHBOOK == 8
+        assert _PAGE_SUPPLIERS == 9
+        assert _PAGE_OTHER_MATERIALS == 10
+        assert _PAGE_EXPENSES == 11
         # Conditional pages keep their slots in order: Reports (Phase 6)
         # then Backups (Phase 8), then Settings last.
-        next_index = 11
+        next_index = 12
         if _REPORTS_AVAILABLE:
-            assert _PAGE_REPORTS == 11
-            next_index = 12
+            assert _PAGE_REPORTS == 12
+            next_index = 13
         if _BACKUPS_AVAILABLE:
             assert _PAGE_BACKUPS == next_index
             next_index += 1
         assert _PAGE_SETTINGS == next_index
-        assert win._sidebar.item(5).text() == tr("nav.customers")
-        assert win._sidebar.item(6).text() == tr("nav.payments")
-        assert win._sidebar.item(7).text() == tr("nav.cashbook")
-        assert win._sidebar.item(8).text() == tr("nav.suppliers")
-        assert win._sidebar.item(9).text() == tr("nav.other_materials")
-        assert win._sidebar.item(10).text() == tr("nav.expenses")
-        sidebar_index = 11
+        assert win._sidebar.item(6).text() == tr("nav.customers")
+        assert win._sidebar.item(7).text() == tr("nav.payments")
+        assert win._sidebar.item(8).text() == tr("nav.cashbook")
+        assert win._sidebar.item(9).text() == tr("nav.suppliers")
+        assert win._sidebar.item(10).text() == tr("nav.other_materials")
+        assert win._sidebar.item(11).text() == tr("nav.expenses")
+        sidebar_index = 12
         if _REPORTS_AVAILABLE:
-            assert win._sidebar.item(11).text() == tr("nav.reports")
-            sidebar_index = 12
+            assert win._sidebar.item(12).text() == tr("nav.reports")
+            sidebar_index = 13
             win.navigate_to(_PAGE_REPORTS)
             from app.ui.reports.page import ReportsPage
 
-            assert isinstance(win._pages.currentWidget(), ReportsPage)
+            assert isinstance(win._pages.currentWidget().widget(), ReportsPage)
         if _BACKUPS_AVAILABLE:
             assert win._sidebar.item(sidebar_index).text() == tr("nav.backups")
             sidebar_index += 1
         assert win._sidebar.item(sidebar_index).text() == tr("nav.settings")
         win.navigate_to(_PAGE_CUSTOMERS)
-        assert isinstance(win._pages.currentWidget(), CustomerCreditPage)
+        assert isinstance(win._pages.currentWidget().widget(), CustomerCreditPage)
         win.navigate_to(_PAGE_PAYMENTS)
-        assert isinstance(win._pages.currentWidget(), CustomerPaymentsPage)
+        assert isinstance(win._pages.currentWidget().widget(), CustomerPaymentsPage)
         win.navigate_to(_PAGE_CASHBOOK)
-        assert isinstance(win._pages.currentWidget(), CashBookPage)
+        assert isinstance(win._pages.currentWidget().widget(), CashBookPage)
         win.navigate_to(_PAGE_SUPPLIERS)
-        assert isinstance(win._pages.currentWidget(), SupplierPage)
+        assert isinstance(win._pages.currentWidget().widget(), SupplierPage)
         win.navigate_to(_PAGE_OTHER_MATERIALS)
-        assert isinstance(win._pages.currentWidget(), OtherMaterialsPage)
+        assert isinstance(win._pages.currentWidget().widget(), OtherMaterialsPage)
         win.navigate_to(_PAGE_EXPENSES)
-        assert isinstance(win._pages.currentWidget(), ExpensePage)
+        assert isinstance(win._pages.currentWidget().widget(), ExpensePage)
         # Every Phase-5 page exposes refresh(); sidebar and stack stay in sync
         # (14 once the Phase-6 reporting service lands and the Reports page
         # is added, plus the Phase-8 Backups page).
-        expected = 12
+        expected = 13
         if _REPORTS_AVAILABLE:
             expected += 1
         if _BACKUPS_AVAILABLE:
