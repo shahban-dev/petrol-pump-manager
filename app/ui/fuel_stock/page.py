@@ -143,7 +143,7 @@ class FuelStockPage(QWidget):
         self._nozzle_label = QLabel(self)
         self._nozzle_combo = QComboBox(self)
         self._snap_qty_label = QLabel(self)
-        self._snap_qty_edit = QLineEdit(self)
+        self._snap_qty_edit = h.make_integer_edit(self)
         self._snap_qty_edit.setAlignment(Qt.AlignRight)
         self._snap_time_label = QLabel(self)
         self._snap_time_edit = QDateTimeEdit(self)
@@ -413,7 +413,7 @@ class FuelStockPage(QWidget):
                 self, errors.NotFoundError("No tanks configured.")
             )
             return
-        qty_edit = QLineEdit(dialog)
+        qty_edit = h.make_integer_edit(dialog)
         measured_edit = QLineEdit(dialog)
         note_edit = QLineEdit(dialog)
         form.addRow(QLabel(tr("stock.tank_label"), dialog), tank_combo)
@@ -448,7 +448,7 @@ class FuelStockPage(QWidget):
                 self, errors.NotFoundError("No tanks configured.")
             )
             return
-        qty_edit = QLineEdit(dialog)
+        qty_edit = h.make_integer_edit(dialog)
         reason_edit = QTextEdit(dialog)
         reason_edit.setMinimumSize(340, 70)
         form.addRow(QLabel(tr("stock.tank_label"), dialog), tank_combo)
@@ -481,7 +481,7 @@ class FuelStockPage(QWidget):
                 self, errors.NotFoundError("No tanks configured.")
             )
             return
-        qty_edit = QLineEdit(dialog)
+        qty_edit = h.make_integer_edit(dialog)
         product_combo = QComboBox(dialog)
         for product in self._products:
             label, product_id = h.product_combo_entry(product)
@@ -528,7 +528,7 @@ class FuelStockPage(QWidget):
                 self, errors.NotFoundError("No fuel products configured.")
             )
             return
-        qty_edit = QLineEdit(dialog)
+        qty_edit = h.make_integer_edit(dialog)
         form.addRow(QLabel(tr("stock.product_label"), dialog), product_combo)
         form.addRow(QLabel(tr("stock.qty_l_label"), dialog), qty_edit)
         form.addRow(self._accept_buttons(dialog))
@@ -576,7 +576,7 @@ class FuelStockPage(QWidget):
         dialog = QDialog(self)
         dialog.setWindowTitle(tr("stock.set_price_title"))
         form = QFormLayout(dialog)
-        price_edit = QLineEdit(dialog)
+        price_edit = h.make_decimal_edit(dialog, decimals=4)
         effective_edit = QDateTimeEdit(dialog)
         effective_edit.setDisplayFormat("dd-MM-yyyy HH:mm")
         effective_edit.setCalendarPopup(True)

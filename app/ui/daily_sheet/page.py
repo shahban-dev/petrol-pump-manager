@@ -348,8 +348,8 @@ class DailySheetPage(QWidget):
                 else cat.name_en
             )
             cat_combo.addItem(label, cat.name)
-        amount_edit = QLineEdit(dialog)
-        amount_edit.setPlaceholderText("0.00")
+        amount_edit = h.make_integer_edit(dialog)
+        amount_edit.setPlaceholderText("0")
         remarks_edit = QLineEdit(dialog)
         form.addRow(QLabel(tr("sheet.category"), dialog), cat_combo)
         form.addRow(QLabel(tr("sheet.amount_pkr"), dialog), amount_edit)
@@ -396,8 +396,8 @@ class DailySheetPage(QWidget):
                 else cat.name_en
             )
             cat_combo.addItem(label, cat.id)
-        amount_edit = QLineEdit(dialog)
-        amount_edit.setPlaceholderText("0.00")
+        amount_edit = h.make_integer_edit(dialog)
+        amount_edit.setPlaceholderText("0")
         payee_edit = QLineEdit(dialog)
         form.addRow(QLabel(tr("sheet.category"), dialog), cat_combo)
         form.addRow(QLabel(tr("sheet.amount_pkr"), dialog), amount_edit)
@@ -531,7 +531,7 @@ class DailySheetPage(QWidget):
                     value.setText(h.format_litres(existing.quantity_ml))
                     grid.addWidget(value, r, 1)
                 else:
-                    edit = QLineEdit(self)
+                    edit = h.make_integer_edit(self)
                     edit.setPlaceholderText(tr("sheet.dip_placeholder"))
                     edit.setAlignment(Qt.AlignRight)
                     self._dip_edits[tank.id] = edit
@@ -616,7 +616,7 @@ class DailySheetPage(QWidget):
             prev_label = self._value_label()
             prev_label.setText(h.format_litres(reading.previous_ml))
 
-            edit = QLineEdit(self)
+            edit = h.make_integer_edit(self)
             edit.setAlignment(Qt.AlignRight)
             if reading.current_ml is not None:
                 edit.setPlaceholderText(h.format_litres(reading.current_ml))
@@ -666,7 +666,8 @@ class DailySheetPage(QWidget):
             )
             return
         try:
-            current_ml = int(round(float(h.parse_litres(text)) * 1000))
+            # Decimal-only math: liters -> milliliters, no float anywhere.
+            current_ml = int(h.parse_litres(text) * 1000)
         except ValueError:
             preview.setText(tr("common.not_entered"))
             return

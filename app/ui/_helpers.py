@@ -9,11 +9,38 @@ from __future__ import annotations
 
 from decimal import Decimal, InvalidOperation
 
-from PySide6.QtWidgets import QMessageBox, QWidget
+from PySide6.QtGui import QDoubleValidator, QIntValidator
+from PySide6.QtWidgets import QLineEdit, QMessageBox, QWidget
 
 from app.calculations import money as calc
 from app.localization import localize_error, tr
 from app.services import errors
+
+
+def make_integer_edit(parent: QWidget | None = None) -> QLineEdit:
+    """A QLineEdit that only accepts integer digits (meter readings, etc.).
+
+    Letters and decimal points are rejected at keystroke level — the field
+    can never hold non-numeric text.
+    """
+    edit = QLineEdit(parent)
+    edit.setValidator(QIntValidator(0, 999_999_999, edit))
+    return edit
+
+
+def make_decimal_edit(
+    parent: QWidget | None = None, *, decimals: int = 2
+) -> QLineEdit:
+    """A QLineEdit that only accepts a decimal number (money, liters).
+
+    Digits and a single decimal separator are allowed; letters are
+    rejected at keystroke level. ``decimals`` caps the fraction digits.
+    """
+    edit = QLineEdit(parent)
+    validator = QDoubleValidator(0.0, 999_999_999.0, decimals, edit)
+    validator.setNotation(QDoubleValidator.StandardNotation)
+    edit.setValidator(validator)
+    return edit
 
 
 def parse_pkr_to_paisa(text: str) -> int:

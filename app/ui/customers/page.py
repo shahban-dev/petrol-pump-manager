@@ -78,9 +78,9 @@ class _CustomerDialog(QDialog):
         self._business_edit = QLineEdit(self)
         self._phone_edit = QLineEdit(self)
         self._address_edit = QLineEdit(self)
-        self._opening_edit = QLineEdit(self)
+        self._opening_edit = h.make_integer_edit(self)
         self._opening_edit.setAlignment(Qt.AlignRight)
-        self._limit_edit = QLineEdit(self)
+        self._limit_edit = h.make_integer_edit(self)
         self._limit_edit.setAlignment(Qt.AlignRight)
         self._no_limit_check = QCheckBox(tr("cust.clear_limit"), self)
         self._status_combo = QComboBox(self)
@@ -209,7 +209,7 @@ class _AdjustOpeningDialog(QDialog):
             QLabel(tr("cust.current_opening"), self),
             QLabel(h.format_pkr(opening), self),
         )
-        self._amount_edit = QLineEdit(self)
+        self._amount_edit = h.make_integer_edit(self)
         self._amount_edit.setAlignment(Qt.AlignRight)
         form.addRow(QLabel(tr("cust.adjust_amount"), self), self._amount_edit)
         self._reason_edit = QTextEdit(self)
@@ -277,7 +277,7 @@ class _IssueTicketDialog(QDialog):
         self._nozzle_combo = QComboBox(self)
         self._nozzle_combo.setEditable(True)
         self._nozzle_combo.setMinimumWidth(110)
-        self._qty_edit = QLineEdit(self)
+        self._qty_edit = h.make_integer_edit(self)
         self._qty_edit.setAlignment(Qt.AlignRight)
         self._qty_edit.setPlaceholderText(tr("ticket.quantity_l"))
         self._qty_edit.setMinimumWidth(110)
@@ -313,7 +313,7 @@ class _IssueTicketDialog(QDialog):
         layout.addWidget(self._lines_group)
 
         form2 = QFormLayout()
-        self._paid_edit = QLineEdit(self)
+        self._paid_edit = h.make_integer_edit(self)
         self._paid_edit.setAlignment(Qt.AlignRight)
         self._paid_edit.setPlaceholderText("0")
         form2.addRow(QLabel(tr("ticket.paid_now"), self), self._paid_edit)

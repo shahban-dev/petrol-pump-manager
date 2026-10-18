@@ -141,7 +141,7 @@ class NozzleReadingsPage(QWidget):
             prev_item.setFlags(prev_item.flags() & ~Qt.ItemIsEditable)
             prev_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
-            current_edit = QLineEdit(self._table)
+            current_edit = h.make_integer_edit(self._table)
             current_edit.setPlaceholderText(
                 h.format_litres(reading.current_ml)
                 if reading.current_ml is not None
@@ -220,8 +220,8 @@ class NozzleReadingsPage(QWidget):
         type_combo = QComboBox(dialog)
         for event_type in ("reset", "rollover", "replacement"):
             type_combo.addItem(tr(_EVENT_TYPE_KEYS[event_type]), event_type)
-        before_edit = QLineEdit(dialog)
-        after_edit = QLineEdit(dialog)
+        before_edit = h.make_integer_edit(dialog)
+        after_edit = h.make_integer_edit(dialog)
         reason_edit = QTextEdit(dialog)
         reason_edit.setMinimumSize(340, 70)
 
@@ -287,7 +287,7 @@ class NozzleReadingsPage(QWidget):
                 ),
             )
             return
-        new_edit = QLineEdit(dialog)
+        new_edit = h.make_integer_edit(dialog)
         reason_edit = QTextEdit(dialog)
         reason_edit.setMinimumSize(340, 70)
 

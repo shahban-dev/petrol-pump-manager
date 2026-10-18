@@ -111,7 +111,7 @@ class _RecordExpenseDialog(QDialog):
             self._category_combo.addItem(_category_name(category), category)
         form.addRow(QLabel(tr("exp.category"), self), self._category_combo)
 
-        self._amount_edit = QLineEdit(self)
+        self._amount_edit = h.make_integer_edit(self)
         self._amount_edit.setAlignment(Qt.AlignRight)
         form.addRow(QLabel(tr("exp.amount_pkr"), self), self._amount_edit)
 

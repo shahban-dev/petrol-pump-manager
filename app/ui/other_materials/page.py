@@ -122,7 +122,7 @@ class _TxnDialog(QDialog):
             self._product_combo.addItem(f"{name} ({unit})", product)
         form.addRow(QLabel(tr("om.product"), self), self._product_combo)
 
-        self._qty_edit = QLineEdit(self)
+        self._qty_edit = h.make_integer_edit(self)
         self._qty_edit.setAlignment(Qt.AlignRight)
         if txn_type == "adjustment":
             form.addRow(
@@ -143,7 +143,7 @@ class _TxnDialog(QDialog):
                 QLabel(tr("om.reference_optional"), self), self._reference_edit
             )
         else:
-            self._price_edit = QLineEdit(self)
+            self._price_edit = h.make_decimal_edit(self, decimals=4)
             self._price_edit.setAlignment(Qt.AlignRight)
             form.addRow(
                 QLabel(tr("om.unit_price_pkr"), self), self._price_edit

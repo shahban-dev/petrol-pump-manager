@@ -114,7 +114,7 @@ class _RecordPaymentDialog(QDialog):
             self._customer_combo.addItem(f"{code} — {name}", customer)
         form.addRow(QLabel(tr("pay.customer"), self), self._customer_combo)
 
-        self._amount_edit = QLineEdit(self)
+        self._amount_edit = h.make_integer_edit(self)
         self._amount_edit.setAlignment(Qt.AlignRight)
         form.addRow(QLabel(tr("pay.amount_pkr"), self), self._amount_edit)
 
@@ -262,7 +262,7 @@ class _AllocateDialog(QDialog):
         self._load_btn.clicked.connect(self._load_candidates)
         self._ticket_combo = QComboBox(self)
         self._ticket_combo.setMinimumWidth(200)
-        self._split_amount_edit = QLineEdit(self)
+        self._split_amount_edit = h.make_integer_edit(self)
         self._split_amount_edit.setAlignment(Qt.AlignRight)
         self._split_amount_edit.setPlaceholderText(tr("pay.amount_pkr"))
         self._split_amount_edit.setMinimumWidth(110)
@@ -519,7 +519,7 @@ class _ReallocateDialog(QDialog):
         add_row = QHBoxLayout()
         self._ticket_combo = QComboBox(self)
         self._ticket_combo.setMinimumWidth(220)
-        self._split_amount_edit = QLineEdit(self)
+        self._split_amount_edit = h.make_integer_edit(self)
         self._split_amount_edit.setAlignment(Qt.AlignRight)
         self._split_amount_edit.setPlaceholderText(tr("pay.amount_pkr"))
         self._add_btn = QPushButton(tr("pay.add_allocation"), self)

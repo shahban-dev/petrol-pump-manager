@@ -128,12 +128,12 @@ class FuelDeliveriesPage(QWidget):
         form.addRow(self._tank_label, self._tank_combo)
 
         self._qty_label = QLabel(self)
-        self._qty_edit = QLineEdit(self)
+        self._qty_edit = h.make_integer_edit(self)
         self._qty_edit.setAlignment(Qt.AlignRight)
         form.addRow(self._qty_label, self._qty_edit)
 
         self._unit_cost_label = QLabel(self)
-        self._unit_cost_edit = QLineEdit(self)
+        self._unit_cost_edit = h.make_decimal_edit(self, decimals=4)
         self._unit_cost_edit.setAlignment(Qt.AlignRight)
         form.addRow(self._unit_cost_label, self._unit_cost_edit)
 
@@ -142,13 +142,13 @@ class FuelDeliveriesPage(QWidget):
         form.addRow(self._invoice_label, self._invoice_edit)
 
         self._other_costs_label = QLabel(self)
-        self._other_costs_edit = QLineEdit(self)
+        self._other_costs_edit = h.make_integer_edit(self)
         self._other_costs_edit.setAlignment(Qt.AlignRight)
         self._other_costs_edit.setPlaceholderText("0")
         form.addRow(self._other_costs_label, self._other_costs_edit)
 
         self._paid_label = QLabel(self)
-        self._paid_edit = QLineEdit(self)
+        self._paid_edit = h.make_integer_edit(self)
         self._paid_edit.setAlignment(Qt.AlignRight)
         self._paid_edit.setPlaceholderText("0")
         form.addRow(self._paid_label, self._paid_edit)

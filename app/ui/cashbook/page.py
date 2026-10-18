@@ -144,12 +144,12 @@ class _SettleDialog(QDialog):
         layout.addLayout(header_row)
         for product in status.get("per_product", []) or []:
             code = str(product.get("fuel_product_code", "—"))
-            cash_edit = QLineEdit(self)
-            bank_edit = QLineEdit(self)
-            other_edit = QLineEdit(self)
+            cash_edit = h.make_integer_edit(self)
+            bank_edit = h.make_integer_edit(self)
+            other_edit = h.make_integer_edit(self)
             for edit in (cash_edit, bank_edit, other_edit):
                 edit.setAlignment(Qt.AlignRight)
-                edit.setPlaceholderText("0.00")
+                edit.setPlaceholderText("0")
             row = QHBoxLayout()
             row.addWidget(QLabel(code, self), 0)
             info = QLabel(
@@ -274,7 +274,7 @@ class _CashMoveDialog(QDialog):
             self._category_combo,
         )
 
-        self._amount_edit = QLineEdit(self)
+        self._amount_edit = h.make_integer_edit(self)
         self._amount_edit.setAlignment(Qt.AlignRight)
         form.addRow(QLabel(tr("cb.amount_pkr"), self), self._amount_edit)
 
