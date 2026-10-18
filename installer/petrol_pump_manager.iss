@@ -34,6 +34,9 @@ SolidCompression=yes
 PrivilegesRequired=lowest
 DisableProgramGroupPage=yes
 UninstallDisplayName=Petrol Pump Manager
+; App icon (restored from app_icon.ico.b64 by the PyInstaller spec before
+; this script compiles; the exe also embeds it for the shortcuts below).
+SetupIconFile=app_icon.ico
 ; 64-bit only build (PySide6 wheels are 64-bit).
 ArchitecturesInstallIn64BitMode=x64compatible
 ArchitecturesAllowed=x64compatible
@@ -54,10 +57,11 @@ Source: "..\dist\PetrolPumpManager\*"; DestDir: "{app}"; \
   Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\Petrol Pump Manager"; Filename: "{app}\PetrolPumpManager.exe"
+Name: "{group}\Petrol Pump Manager"; Filename: "{app}\PetrolPumpManager.exe"; \
+  IconFilename: "{app}\PetrolPumpManager.exe"
 Name: "{group}\Uninstall Petrol Pump Manager"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\Petrol Pump Manager"; Filename: "{app}\PetrolPumpManager.exe"; \
-  Tasks: desktopicon
+  IconFilename: "{app}\PetrolPumpManager.exe"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\PetrolPumpManager.exe"; \

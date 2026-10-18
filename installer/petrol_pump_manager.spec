@@ -99,6 +99,20 @@ datas = [
     ),
 ]
 
+# ---------------------------------------------------------------------------
+# App icon: shipped as base64 text (the GitHub App cannot push binaries via
+# API, same workaround as the Urdu fonts). Restored to a real .ico here so
+# PyInstaller's EXE() can embed it — the installed app and its shortcuts
+# then show the pump icon instead of a generic/Python one.
+# ---------------------------------------------------------------------------
+import base64 as _b64
+
+_ICON_B64 = PROJECT_ROOT / "installer" / "app_icon.ico.b64"
+_ICON_ICO = PROJECT_ROOT / "installer" / "app_icon.ico"
+if _ICON_B64.exists() and not _ICON_ICO.exists():
+    _ICON_ICO.write_bytes(_b64.b64decode(_ICON_B64.read_text().strip()))
+_APP_ICON = str(_ICON_ICO) if _ICON_ICO.exists() else None
+
 # Hidden imports. Modulegraph follows the static imports from app/main.py,
 # but force-include every submodule of the ``app`` package so nothing the
 # lazily-imported UI/report code needs is dropped.
@@ -139,7 +153,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,  # TODO: point at an app icon when one is provided (Phase 9)
+    icon=_APP_ICON,
 )
 
 coll = COLLECT(
